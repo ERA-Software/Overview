@@ -24,13 +24,12 @@ main_bar: A 1D bar example with KLE-discretized random field.
     * pyDOE
 
 
-## Version: 
-
-Last change: 01/2020
-
-
 ## Documentation & background
 
 Papaioannou, I., Ehre, M., & Straub, D. (2019). PLS-based adaptation for efficient PCE representation in high dimensions. Journal of Computational Physics, 387, 186–204. doi: 10.1016/j.jcp.2019.02.046
+
+## Version: 
+
+Last change: 01/2020
 
 
