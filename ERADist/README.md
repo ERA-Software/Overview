@@ -15,8 +15,5 @@ MATLAB, incl. Statistical toolbox, ERADist and ERANataf probability distribution
 
 Python 3, incl. numpy, scipy, matplotlib, ERADist and ERANataf probability distribution classes (optional autograd)
 
-## Versions
-
-MATLAB: 05/2023
-Python: 05/2023
+## Last change: 05/2023
 
