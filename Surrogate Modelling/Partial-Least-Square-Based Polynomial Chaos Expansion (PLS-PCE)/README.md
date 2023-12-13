@@ -22,9 +22,11 @@ main_bar: A 1D bar example with KLE-discretized random field.
     * numpy
     * scipy
     * pyDOE
-    
 
-## Last change: 01/2020
+
+## Version: 
+
+Last change: 01/2020
 
 
 ## Documentation & background
