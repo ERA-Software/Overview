@@ -40,7 +40,7 @@ A set of tools for reliability analysis and estimation of rare event probabiliti
 
 ## Bayesian Inference Tools
 
-<img src="./Bayesian Inference Tools/images/adaptive_bus_pic.webp" align="right" height="190">
+<img src="./images/bayesian_inference_pic.webp" align="right" height="190">
 A set of tools for sampling-based Bayesian inference. Includes: 
 
 - Bayesian Updating with Structural reliability methods (BUS)
