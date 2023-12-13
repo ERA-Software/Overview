@@ -2,7 +2,7 @@
 
 This page collects software tools for sampling-based Bayesian inference.
 
-We provide 3 benchmark problems which is described in the examples file.
+We provide 3 benchmark problems which is described in the [examples file](./Bayesian_inference_examples.pdf).
 
 
 ## BUS
