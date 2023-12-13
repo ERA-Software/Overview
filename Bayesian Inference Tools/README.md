@@ -21,7 +21,7 @@ MATLAB and Python 3 software tool for Bayesian inference with the adaptive versi
 
 ## Improved TMCMC
 
-<img src="./images/itmcmc_pic.webp" align="right" height="150">
+<img src="./images/itmcmc_pic.webp" align="right" height="190">
 A set of tools for reliability analysis and estimation of rare event probabilities. Includes:
 </br></br> </br></br> </br></br> 
 
