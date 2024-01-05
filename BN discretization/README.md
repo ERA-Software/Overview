@@ -21,8 +21,4 @@ The Bayesian network is outputed in the format of the Genie BN software, which c
 Zwirglmaier, K., & Straub, D. (2016). A discretization procedure for rare events in Bayesian networks. Reliability Engineering & System Safety, 153, 96-109.
 
 
-## Version
-
-Last change: 03/2021
-
 
