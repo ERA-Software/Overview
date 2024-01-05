@@ -5,7 +5,7 @@ A MATLAB based software prototype performing efficient static discretization for
 The software:
 * Comes up with an efficient discretization scheme, applying the heuristics developed in (Zwirglmaier & Straub, 2015)
 * Establishes the CPTs of the reliability Bayesian network.
-* Outputs the BN model in the form of a xdsl-file, which can be read and modified, e.g., using the (free) BN software [GeNIe](https://download.bayesfusion.com/files.html?)category=Academia#GeNIe)
+* Outputs the BN model in the form of a xdsl-file, which can be read and modified, e.g., using the (free) BN software [GeNIe](https://download.bayesfusion.com/files.html?category=Academia#GeNIe)
 
 
 
