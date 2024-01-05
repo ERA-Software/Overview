@@ -61,7 +61,7 @@ discrete Bayesian network framework.
 
 ## Risk Analysis Tool (RAT)
 
-<img src="./images/rat_pic.webp" align="right" height="250">
+<img src="./Risk Analysis Tools (RAT)/images/rat_overview_pic.webp" align="right" height="250">
 “RAT” is an Excel based tool for scenario-based risk assessment and for Cost Benefit Analysis (CBA) of alternative risk mitigation strategies. It consists of three modules: (1) Risk estimation, (2) Cost estimation and (3) Evaluation of strategies using CBA. It is applicable for problems related to natural hazards such as floods as well as other types of hazards for which the risk is assessed through scenarios representing varying magnitudes of the hazard. Results are presented in tables and figures that can directly be used in reports and presentations. A comprehensive documentation of the methodology utilised in RAT and illustrative examples are also provided. 
 
 
