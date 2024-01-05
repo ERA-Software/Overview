@@ -47,7 +47,7 @@ A set of tools for sampling-based Bayesian inference. Includes:
 - Adaptive BUS
 - Improved Transitional Markov Chain Monte Carlo (iTMCMC)
 - Sequential Monte Carlo
-</br></br> </br></br> 
+</br></br> </br>
 
 
 ## Bayesian network discretization of reliability problems
