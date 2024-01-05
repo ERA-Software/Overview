@@ -2,8 +2,6 @@
 
 MATLAB and Python 3 software for Bayesian inference of engineering models using Bayesian updating with structural reliability (BUS) methods. The BUS approach is based on an equivalent formulation of the Bayesian updating problem in terms of a structural reliability problem. By using this method, a failure event (in the context of structural reliability) can be related to an observation event (in the context of Bayesian updating), and thus, algorithms developed for structural reliability can be applied to obtain samples from the posterior distribution. BUS requires the choice of a constant c such that 1/c is not smaller than the maximum of the likelihood function. In the current implementation BUS is combined with Subset Simulation (SuS), which is an adaptive Monte Carlo method that performs efficiently in high-dimensional problems.
 
-</br></br> 
-
 Required input: 
 * Number of samples per subset level
 * Intermediate conditional probability
