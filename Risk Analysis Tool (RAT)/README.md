@@ -4,7 +4,7 @@
 
 The purpose of the Microsoft Excel based “RAT” tool is to support users with quantitative risk analyses for natural hazards and with the evaluation of alternative risk mitigation strategies using Cost Benefit Analysis (CBA). It is also applicable to other types of hazards for which the risk is assessed through scenarios corresponding to varying magnitudes of the hazard. Results are presented in tables and figures that can directly be used in reports and presentations.
 </br> 
-<img src="./images/rat_evaluation_pic.webp" align="right" height="250">
+<img src="./images/rat_evaluation_pic.webp" align="center" height="270">
 </br> 
 
 The RAT tool includes the following 3 modules:
@@ -14,14 +14,13 @@ The RAT tool includes the following 3 modules:
     - RAT enables the inclusion of so-called subscenarios when estimating the expected damage for selected scenarios. With the subscenarios, one can represent different developments of hazard scenarios (such as initiation of secondary hazard events or failure of critical infrastructure).
     - RAT Lite additionally allows considering changes of risk in time, e.g. due to climate change, or due to changes in damage potential associated with socio-economic development.
 
-</br> 
-<img src="./images/rat_curve_pic.webp" align="right" height="150">
+<img src="./images/rat_curve_pic.webp" align="center" height="170">
 </br> 
 
 * Cost estimation – The RAT cost estimation module serves for planning all costs associated with implementation, operation and maintenance of a risk mitigation strategy. They can be implemented as one-time costs (e.g. investment costs, reconstruction costs) or continuous costs (e.g. annual maintenance costs). RAT calculates the Net Present Value (NPV) of cost over the defined planning horizon.
 
 </br> 
-<img src="./images/rat_comparison_pic.webp" align="right" height="150">
+<img src="./images/rat_comparison_pic.webp" align="center" height="170">
 </br> 
 
 * Evaluation of alternative mitigation strategies using CBA – The evaluation module of RAT compares the discounted lifetime risk and cost of alternative risk mitigation strategies and identifies the strategy that minimizes the sum of discounted risk and costs over the planning horizon.
