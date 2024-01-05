@@ -3,7 +3,7 @@
 ## Scenario-based risk assessment and cost-benefit analysis
 
 The purpose of the Microsoft Excel based “RAT” tool is to support users with quantitative risk analyses for natural hazards and with the evaluation of alternative risk mitigation strategies using Cost Benefit Analysis (CBA). It is also applicable to other types of hazards for which the risk is assessed through scenarios corresponding to varying magnitudes of the hazard. Results are presented in tables and figures that can directly be used in reports and presentations.
-</br> 
+
 <img src="./images/rat_evaluation_pic.webp" align="center" height="270">
 </br> 
 
@@ -19,7 +19,6 @@ The RAT tool includes the following 3 modules:
 
 * Cost estimation – The RAT cost estimation module serves for planning all costs associated with implementation, operation and maintenance of a risk mitigation strategy. They can be implemented as one-time costs (e.g. investment costs, reconstruction costs) or continuous costs (e.g. annual maintenance costs). RAT calculates the Net Present Value (NPV) of cost over the defined planning horizon.
 
-</br> 
 <img src="./images/rat_comparison_pic.webp" align="center" height="170">
 </br> 
 
