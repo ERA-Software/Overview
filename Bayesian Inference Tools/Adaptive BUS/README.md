@@ -1,4 +1,4 @@
-# Bayesian Updating with Subset Simulation
+# Adaptive BUS with Subset Simulation
 
 MATLAB and Python 3 software for Bayesian inference of engineering models using an adaptive version of the BUS approach (aBUS). In the standard version of BUS the choice of a constant c is required such that 1/c is not smaller than the maximum of the likelihood function. The aBUS method combines the BUS approach with the SuS method in such a way that the constant c is no longer required as input. The aBUS approach is well-suited for problems with many uncertain parameters and for problems where it is computationally demanding to evaluate the likelihood function.
 
