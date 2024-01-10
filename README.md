@@ -52,7 +52,7 @@ A set of tools for sampling-based Bayesian inference. Includes:
 
 ## Bayesian network discretization of reliability problems
 
-<img src="./images/BN_pic.png" align="right" height="180">
+<img src="./BN discretization/images/BN_pic.png" align="right" height="180">
 A MATLAB based software prototype performing efficient static discretization </br>
 for structural reliability problems, such that they can be updated in a </br>
 discrete Bayesian network framework.
