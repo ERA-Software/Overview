@@ -28,7 +28,7 @@ Tools for uncertainty quantification with surrogate models. Includes:
 
 ## Reliability Analysis Tools
 
-<img src="./images/reliability_analysis_pic.webp" align="right" height="150">
+<img src="./Reliability Analysis Tools/images/SuS_pic.webp" align="right" height="150">
 A set of tools for reliability analysis and estimation of rare event probabilities. Includes:
 
 - First-Order Reliability Method
