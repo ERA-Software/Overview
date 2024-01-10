@@ -8,27 +8,30 @@ We provide a list of 6 **benchmark problems** which are described in [this docum
 
 ## First-Order Reliability Method
 
+<img src="./images/FORM_pic.webp" align="right" height="270">
+
 MATLAB and Python 3 software tools for reliability assessment using the First-Order Reliability Method. The optimization problem is solved by the Hasofer-Lind-Rackwitz-Fiessler (HLRF) algorithm and standard optimization libraries.
 
-<img src="./images/FORM_pic.webp" align="right" height="270">
 </br> </br> </br> 
 
 
 
 ## Cross-Entropy Method and Improved Cross Entropy Method
 
+<img src="./images/CE_pic.jpg" align="right" height="150">
+
 MATLAB and Python 3 software tools for reliability assessment using the cross entropy method (CE) and the improved cross entropy method (iCE) to find an importance sampling (IS) density. Different parametric distribution families are available to be chosen from (single Gaussian (SG), Gaussian mixture (GM), von Mises-Fisher-Nakagami mixture (vMFNM)).
 
-<img src="./images/CE_pic.jpg" align="right" height="150">
 </br> </br> </br> 
 
 
 
 ## Subset Simulation
 
+<img src="./images/SuS_pic.webp" align="right" height="210">
+
 MATLAB and Python 3 software tools for reliability assessment with Subset Simulation that includes an implementation of the adaptive Conditional Sampling approach for MCMC sampling conditional on intermediate failure events.
 
-<img src="./images/SuS_pic.webp" align="right" height="210">
 </br> </br> </br> 
 
 
@@ -44,8 +47,9 @@ MATLAB and Python 3 software tools for reliability assessment with Sequential Im
 
 ## Combination Line Sampling
 
+<img src="./images/CLS_pic.pdf" align="right" height="210">
+
 A MATLAB and Python 3 software for the computation of rare event probabilities for reliability assessment using the combination line sampling (CLS) approach. 
 
-<img src="./images/CLS_pic.pdf" align="right" height="210">
 </br> </br> </br> 
 
