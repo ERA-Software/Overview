@@ -1,0 +1,112 @@
+%% Subset Simulation: Ex. 3 Ref. 3 - system reliability limit state function
+%{
+---------------------------------------------------------------------------
+Created by:
+Felipe Uribe
+Matthias Willer
+Daniel Koutas
+Engineering Risk Analysis Group   
+Technische Universitat Munchen
+www.bgu.tum.de/era
+---------------------------------------------------------------------------
+Current version 2022-04
+* Inclusion of sensitivity analysis
+---------------------------------------------------------------------------
+Based on:
+1."Estimation of small failure probabilities in high dimentions by SuS"
+   Siu-Kui Au & James L. Beck.
+   Probabilistic Engineering Mechanics 16 (2001) 263-277.
+2."MCMC algorithms for subset simulation"
+   Papaioannou et al.
+   Probabilistic Engineering Mechanics 41 (2015) 83-103.
+3."Sequential importance sampling for structural reliability analysis"
+   Papaioannou et al.
+   Structural Safety 62 (2016) 66-75
+---------------------------------------------------------------------------
+%}
+clear; close all; clc;
+
+%% definition of the random variables
+d      = 2;          % number of dimensions
+pi_pdf = repmat(ERADist('standardnormal','PAR'), d, 1);   % n independent rv
+
+% % correlation matrix
+% R = eye(d);   % independent case
+% 
+% % object with distribution information
+% pi_pdf = ERANataf(pi_pdf,R);    % if you want to include dependence
+
+%% limit state function
+g = @(x) min([ 0.1.*(x(:,1)-x(:,2)).^2-(x(:,1)+x(:,2))./sqrt(2)+3,...
+                   0.1.*(x(:,1)-x(:,2)).^2+(x(:,1)+x(:,2))./sqrt(2)+3,...
+                   x(:,1)-x(:,2) + 7./sqrt(2),...
+                   x(:,2)-x(:,1) + 7./sqrt(2) ], [], 2);
+               
+%% Implementation of sensitivity analysis: 1 - perform, 0 - not perform
+sensitivity_analysis = 1;
+
+%% Samples return: 0 - none, 1 - final sample, 2 - all samples
+samples_return = 2;
+
+%% subset simulation
+N  = 2000;        % Total number of samples for each level
+p0 = 0.1;         % Probability of each subset, chosen adaptively
+
+fprintf('SUBSET SIMULATION: \n');
+[Pf_SuS, delta_SuS, b, Pf, b_sus, pf_sus, samplesU, samplesX, S_F1] = SuS(N,p0,g,pi_pdf, sensitivity_analysis, samples_return);
+
+%% Reference values
+% The reference values for the first order indices
+S_F1_ref   = [0.0481, 0.0481];
+
+% Print reference values for the first order indices
+fprintf("***Reference first order Sobol' indices: ***\n");
+disp(S_F1_ref);
+
+% reference solution
+pf_ref   = 2.26e-3;
+Pf_exact = @(gg) normcdf(gg,beta,1);
+gg       = 0:0.05:7;
+
+% show p_f results
+fprintf('\n***Reference Pf: %g ***', pf_ref);
+fprintf('\n***SuS Pf: %g ***\n\n', Pf_SuS);
+
+%% Plots
+% plot samples
+if ~isempty(samplesU.total{1})
+    m     = length(Pf);
+    xx    = -7:0.05:7; 
+    nnp   = length(xx); 
+    [X,Y] = meshgrid(xx);
+    xnod  = cat(2,reshape(X',nnp^2,1),reshape(Y',nnp^2,1));
+    Z     = g(xnod); 
+    Z     = reshape(Z,nnp,nnp);
+    %
+    figure; hold on;
+    contour(Y, X, Z, [0,0],'r','LineWidth',3);  % LSF
+    for j = 1:m+1
+       u_j_samples = samplesU.total{j};
+       plot(u_j_samples(:,1), u_j_samples(:,2), '.');
+       if samples_return == 1
+           break
+       end
+    end
+    axis equal tight;
+end
+
+% Plot failure probability: 
+figure; 
+title('Failure probability estimate','Interpreter','Latex','FontSize', 20);
+xlabel('Limit state function, $g$','Interpreter','Latex','FontSize', 18);   
+ylabel('Failure probability, $P_f$','Interpreter','Latex','FontSize', 18);
+
+% Plot failure probability: SuS
+hold on;
+semilogy(b_sus,pf_sus,'r--');           % curve
+semilogy(b,Pf,'ko','MarkerSize',5);     % points
+semilogy(0,Pf_SuS,'b*','MarkerSize',6);
+semilogy(0,pf_ref,'ro','MarkerSize',8);
+set(gca,'yscale','log'); axis tight;
+hl = legend('SuS','Intermediate levels','Pf SuS','Pf Ref.','Location','SE');
+set(hl,'Interpreter','latex'); set(gca,'FontSize',18);
