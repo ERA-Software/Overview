@@ -14,8 +14,8 @@ Current version 2021-05
 """
 import numpy as np
 
-from Distributions.ERADist import ERADist
-from Distributions.ERANataf import ERANataf
+from ERADist import ERADist
+from ERANataf import ERANataf
 from CLS import CLS
 
 ## Fix Seed with True or deactivate with False

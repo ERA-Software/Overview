@@ -20,8 +20,8 @@ import numpy as np
 import scipy as sp
 from scipy import stats
 
-from Distributions.ERANataf import ERANataf
-from Distributions.ERADist import ERADist
+from ERANataf import ERANataf
+from ERADist import ERADist
 from CLS import CLS
 
 
