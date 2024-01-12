@@ -6,7 +6,7 @@ We provide a list of 6 **benchmark problems** which are described in [this docum
 
 
 
-## First-Order Reliability Method
+## 1. First-Order Reliability Method
 
 <img src="./images/FORM_pic.webp" align="right" height="190">
 
@@ -16,7 +16,7 @@ MATLAB and Python 3 software tools for reliability assessment using the First-Or
 
 
 
-## Cross-Entropy Method and Improved Cross Entropy Method
+## 2. Cross-Entropy Method and Improved Cross Entropy Method
 
 <img src="./images/CE_pic.jpg" align="right" height="150">
 
@@ -26,7 +26,7 @@ MATLAB and Python 3 software tools for reliability assessment using the cross en
 
 
 
-## Subset Simulation
+## 3. Subset Simulation
 
 <img src="./images/SuS_pic.webp" align="right" height="190">
 
@@ -36,7 +36,7 @@ MATLAB and Python 3 software tools for reliability assessment with Subset Simula
 
 
 
-## Sequential Importance Sampling
+## 4. Sequential Importance Sampling
 
 <img src="./images/SIS_pic.webp" align="right" height="190">
 
@@ -46,7 +46,7 @@ MATLAB and Python 3 software tools for reliability assessment with Sequential Im
 
 
 
-## Combination Line Sampling
+## 5. Combination Line Sampling
 
 <img src="./images/CLS_pic.jpg" align="right" height="210">
 
