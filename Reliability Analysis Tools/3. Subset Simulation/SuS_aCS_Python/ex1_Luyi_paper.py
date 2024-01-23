@@ -1,10 +1,9 @@
 import numpy as np
-import scipy as sp
 import matplotlib.pyplot as plt
 from ERANataf import ERANataf
 from ERADist import ERADist
 from SuS import SuS
-from aCS import aCS
+from Sim_Sensitivity import Sim_Sensitivity
 plt.close('all')
 """
 ---------------------------------------------------------------------------
@@ -12,11 +11,15 @@ Subset Simulation: Ex. 1 Ref. 2  - Strongly nonlinear and non-monotonic LSF
 ---------------------------------------------------------------------------
 Created by:
 Daniel Koutas
+
+Developed by:
+Ivan Olarte-Rodriguez
 Engineering Risk Analysis Group
 Technische Universitat Munchen
 www.bgu.tum.de/era
 ---------------------------------------------------------------------------
-First version: 2022-04
+Version 2023-12
+* Modification in Sensitivity Analysis calls
 ---------------------------------------------------------------------------
 Based on:
 1."Estimation of small failure probabilities in high dimentions by SuS"
@@ -41,22 +44,35 @@ pi_pdf = ERANataf(pi_pdf, R)    # if you want to include dependence
 # %% limit state function
 g    = lambda x: x[:,0]**3 + 10*x[:,1]**2 + 0.1*np.sin(np.pi*x[:,1]) + 10*x[:,2]**2 + 40*np.sin(np.pi*x[:,2]) + 38
 
+# %% Samples Return
+samples_return = 1
 # %% subset simulation
-N  = 4000        # Total number of samples for each level
+N  = 2000        # Total number of samples for each level
 p0 = 0.1         # Probability of each subset, chosen adaptively
 
 print('\n\nSUBSET SIMULATION: ')
-[Pf_SuS, delta_SuS, b, Pf, b_sus, pf_sus, samplesU, samplesX, S_F1] = SuS(N, p0, g, pi_pdf)
+[Pf_SuS, delta_SuS, b, Pf, b_sus, pf_sus, samplesU, samplesX, fs_iid] = SuS(N, p0, g, pi_pdf, samples_return)
 
-# reference solution
+# %% Implementation of sensitivity analysis
+
+# Computation of Sobol Indices
+compute_Sobol = True
+
+# Computation of EVPPI (based on standard cost of failure (10^8) and cost
+# of replacement (10^5)
+compute_EVPPI = False
+
+[S_F1, _] = Sim_Sensitivity(fs_iid, Pf_SuS, pi_pdf, compute_Sobol, compute_EVPPI)
+
+# %% reference solution
 pf_ref    = 0.0062
 MC_S_F1  = [0.0811, 0.0045, 0.0398] # approximately read and extracted from paper
 
-# show results
+# %% show results
 print('\n***Reference Pf: ***', pf_ref)
 print('\n***SuS Pf: ***', Pf_SuS)
 
-print('\n\n***MC sensitivity indices:')
+print('\n\n***MC Sobol indices:')
 print(MC_S_F1)
-print('\n***SuS sensitivity indices:')
+print('\n***SuS Sobol indices:')
 print(S_F1)

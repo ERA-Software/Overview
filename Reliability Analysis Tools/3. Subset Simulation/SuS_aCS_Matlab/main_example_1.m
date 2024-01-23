@@ -5,12 +5,14 @@ Created by:
 Felipe Uribe
 Matthias Willer
 Daniel Koutas
+Ivan Olarte-Rodriguez
+
 Engineering Risk Analysis Group   
 Technische Universitat Munchen
 www.bgu.tum.de/era
 ---------------------------------------------------------------------------
-Current version 2022-04
-* Inclusion of sensitivity analysis
+Current version 2023-12
+* Modification to Sensitivity Analysis Calls
 ---------------------------------------------------------------------------
 Based on:
 1."Estimation of small failure probabilities in high dimentions by SuS"
@@ -27,35 +29,44 @@ rng(1)
 d      = 2;          % number of dimensions
 pi_pdf = repmat(ERADist('standardnormal','PAR'), d, 1);   % n independent rv
 
-% % correlation matrix
-% R = eye(d);   % independent case
-% 
-% % object with distribution information
-% pi_pdf = ERANataf(pi_pdf, R);    % if you want to include dependence
+% correlation matrix
+R = eye(d);   % independent case
+ 
+% object with distribution information
+pi_pdf = ERANataf(pi_pdf, R);    % if you want to include dependence
 
 %% limit state function
 beta = 3.5;
 g    = @(x) -sum(x,2)/sqrt(d) + beta;
 
-%% Implementation of sensitivity analysis: 1 - perform, 0 - not perform
-sensitivity_analysis = 1;
 
 %% Samples return: 0 - none, 1 - final sample, 2 - all samples
 samples_return = 1;
 
 %% subset simulation
-N  = 3000;        % Total number of samples for each level
+N  = 2000;        % Total number of samples for each level
 p0 = 0.1;         % Probability of each subset, chosen adaptively
 
 fprintf('SUBSET SIMULATION: \n');
-[Pf_SuS, delta_SuS, b, Pf, b_sus, pf_sus, samplesU, samplesX, S_F1] = SuS(N,p0,g,pi_pdf, sensitivity_analysis, samples_return);
+[Pf_SuS, delta_SuS, b, Pf, b_sus, pf_sus, samplesU, samplesX, fs_iid] = SuS(N,p0,g,pi_pdf, samples_return);
+
+%% Implementation of sensitivity analysis
+
+% Computation of Sobol Indices
+compute_Sobol = true;
+
+% Computation of EVPPI (based on standard cost of failure (10^8) and cost
+% of replacement (10^5)
+compute_EVPPI = true;
+
+[S_F1, S_EVPPI] = Sim_Sensitivity(fs_iid, Pf_SuS, pi_pdf, compute_Sobol,compute_EVPPI);
 
 %% Reference values
 % The reference values for the first order indices
 S_F1_ref   = [0.0315, 0.0315];
 
 % Print reference values for the first order indices
-fprintf("***Reference first order Sobol' indices: ***\n");
+fprintf("\n\n***Reference first order Sobol' indices: ***\n");
 disp(S_F1_ref);
 
 % exact solution
@@ -88,6 +99,9 @@ if ~isempty(samplesU.total{1})
               break
           end
        end
+       xlabel('$u_1$','Interpreter','Latex','FontSize', 18);
+       ylabel('$u_2$','Interpreter','Latex','FontSize', 18);
+       set(get(gca,'ylabel'),'rotation',0);
        axis equal tight;
     end
 end

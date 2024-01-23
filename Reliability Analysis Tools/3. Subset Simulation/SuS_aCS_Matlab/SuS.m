@@ -1,16 +1,20 @@
-function [Pf_SuS,delta_SuS,b,Pf,b_line,Pf_line,samplesU,samplesX, S_F1] = SuS(N, p0, g_fun, distr, sensitivity_analysis, samples_return)
+function [Pf_SuS,delta_SuS,b,Pf,b_line,Pf_line,samplesU,samplesX, f_s_iid] = SuS(N, p0, g_fun, distr, samples_return)
 %% Subset Simulation function (standard Gaussian space)
 %{
 ---------------------------------------------------------------------------
 Created by:
 Felipe Uribe
 Daniel Koutas
+
+Developed by:
+Ivan Olarte-Rodriguez
+
 Engineering Risk Analysis Group
 Technische Universitat Munchen
 www.bgu.tum.de/era
 ---------------------------------------------------------------------------
-Current version 2022-04
-* Inclusion of sensitivity analysis
+Current version 2023-04
+* Modification of Sensitivity Analysis Calls
 ---------------------------------------------------------------------------
 Comments:
 *Express the failure probability as a product of larger conditional failure
@@ -28,7 +32,6 @@ Input:
 * alg                  : Sampling algorithm
                          - 'acs' : Adaptive Conditional Sampling
                          - 'mma' : Component-wise Metropolis Algorithm
-* sensitivity_analysis : Implementation of sensitivity analysis: 1 - perform, 0 - not perform
 * samples_return       : return of samples: 0 - none, 1 - final sample, 2 - all samples
 ---------------------------------------------------------------------------
 Output:
@@ -40,7 +43,7 @@ Output:
 * Pf_line   : failure probabilities corresponding to b_line
 * samplesU  : samples in the Gaussian standard space for each level
 * samplesX  : samples in the physical/original space for each level
-* S_F1      : vector of first order Sobol' indices
+* f_s_iid   : i.i.d failure samples
 ---------------------------------------------------------------------------
 Based on:
 1."Estimation of small failure probabilities in high dimentions by SubSim"
@@ -58,13 +61,13 @@ end
 %% transform to the standard Gaussian space
 if any(strcmp('Marginals',fieldnames(distr))) == 1   % use Nataf transform (dependence)
    n   = length(distr.Marginals);    % number of random variables (dimension)
-   u2x = @(u) distr.U2X(u);          % from u to x
+   u2x = @(u) reshape(distr.U2X(u),[],n);          % from u to x
    
 else   % use distribution information for the transformation (independence)
    % Here we are assuming that all the parameters have the same distribution !!!
    % Adjust accordingly otherwise
    n   = length(distr);                    % number of random variables (dimension)
-   u2x = @(u) distr(1).icdf(normcdf(u));   % from u to x   
+   u2x = @(u) reshape(distr(1).icdf(normcdf(u)),[],n);   % from u to x   
 end
 
 %% LSF in standard space
@@ -161,7 +164,7 @@ if ~ismember(samples_return, [0 1])
     samplesU.total{j} = u_j;
 else
     % Samples return - last
-    if (samples_return == 1) || (samples_return == 0 && sensitivity_analysis == 1)
+    if (samples_return == 1) 
         samplesU.total{1} = u_j;
     end
 end
@@ -201,32 +204,22 @@ b_line  = sort(b_line(:));
 
 %% transform the samples to the physical/original space
 samplesX = cell(length(samplesU.total),1);
-if (samples_return ~= 0) || (samples_return == 0 && sensitivity_analysis == 1)
+if (samples_return ~= 0) 
 	for i = 1:length(samplesU.total)
 		samplesX{i} = u2x(samplesU.total{i});
 	end
 end
 
-if sensitivity_analysis == 1
-    % resample 1e4 failure samples
-    I_final = (geval <=0);
-    id = randsample(find(I_final),1e4,'true');
-    f_s = samplesX{end}(id,:);
-    [S_F1, exitflag, errormsg] = Sim_Sobol_indices(f_s, Pf_SuS, distr);
-    if exitflag == 1
-        fprintf("\n-First order indices: \n");
-        disp(S_F1);
-    else
-        fprintf('\n-Sensitivity analysis could not be performed, because: \n')
-        fprintf(errormsg);
-    end
-    if samples_return == 0
-        samplesU.total = cell(1,1);  % empty return samples U
-        samplesX = cell(1,1);  % and X
-    end
-else 
-    S_F1 = [];
+% resample 1e4 failure samples
+I_final = (geval <=0);
+id = randsample(find(I_final),1e4,'true');
+f_s_iid = samplesX{end}(id,:);
+
+if samples_return == 0
+    samplesU.total = cell(1,1);  % empty return samples U
+    samplesX = cell(1,1);  % and X
 end
+
 
 % Convergence is not achieved message
 if j - 1 == max_it

@@ -41,6 +41,7 @@ Output:
 * S_F1      : vector of first order sensitivity indices
 * exitflag  : flag whether method was successful or not
 * errormsg  : error message describing what went wrong
+* w_opt: optimal bandwidths for the KDE of the pdf of each variable
 ---------------------------------------------------------------------------
 """
 import numpy as np
@@ -70,12 +71,14 @@ def Sim_Sobol_indices(samplesX, Pf, distr):
     Maxiter = 500       # default of fminbnd is 500
     Tolx    = 1e-4      # default of fminbnd is 1e-4
     lb      = 0         # lower boundary for search interval on w
+
     # heuristic upper boundary for search interval on w; Inf not well handled
-    ub      = [int(round(k)) for k in 10*abs(samplesX.max(axis=0)-samplesX.min(axis=0))]
+    #ub      = [int(round(k)) for k in 5*abs(samplesX.max(axis=0)-samplesX.min(axis=0))]
+    ub      = [k for k in 5*abs(samplesX.max(axis=0)-samplesX.min(axis=0))]
     #ub = [int(round(k)) for k in ub]
 
     # Silverman's rule of thumb for starting points for band width estimation
-    w0_vec = 1.06*np.std(samplesX, axis=0)*N**(-1/5)
+    # w0_vec = 1.06*np.std(samplesX, axis=0)*N**(-1/5)
     # heuristic starting points (global minimum is often closer to 0)
     w0_vec = 1/10*abs(samplesX.max(axis=0)-samplesX.min(axis=0))
 
@@ -89,15 +92,20 @@ def Sim_Sobol_indices(samplesX, Pf, distr):
         raise RuntimeError("Select either 'integral' or 'inverse' as your numerical integration method")
 
     ## Find optimal bandwidth for kernel density estimation (kde)
-    print('\n-Calculating optimal bandwidths:\n')
-
     # Find the optimal bandwidth for each dimension with maximum likelihood
     # cross validation (MLCV)
     w_opt = np.zeros(d)
     for u in range(d):
         w_opt_handle = lambda w: w_opt_finder(w, N, samplesX[:,u], idcs_x, counts)
-        [w_opt[u], _, ex_flag, _] = sp.optimize.fminbound(w_opt_handle, lb, ub[u], xtol=Tolx, maxfun=Maxiter, full_output=True)
 
+        optim_opts:dict = {'maxiter':Maxiter,'disp':False}
+        opt_res:sp.optimize.OptimizeResult = sp.optimize.minimize_scalar(w_opt_handle,
+                                                                bounds=(lb, ub[u]),
+                                                                options=optim_opts,
+                                                                method='bounded')
+        
+        w_opt[u] = opt_res.x
+        ex_flag = opt_res.status
         # if optimal w not found, try fmincon, success if ex_flag == 0
         if ex_flag != 0:
             print('Fminbnd was not succesful, now trying scipy.optimize.minimize\n')
@@ -115,11 +123,10 @@ def Sim_Sobol_indices(samplesX, Pf, distr):
                 errormsg = res.message
                 return S_F1, exitflag, errormsg
 
-    print("\nOptimal bandwidths:")
+    print("\n-Optimal bandwidths:")
     print(w_opt)
-    ## Compute sensitivity indices
-    print('\nCalculating sensitivity indices:\n')
 
+    ## Compute Sobol indices
     if int_method == 'inverse':
         # numerical integration samples
         N_i = int(5e4)
@@ -142,9 +149,16 @@ def Sim_Sobol_indices(samplesX, Pf, distr):
     elif int_method == 'integral':
         B = np.zeros(d)
         for u in range(d):
-            pdf_int = lambda x: (np.minimum(kde(samplesX[:,u], x, w_opt[u])* Pf / dist[u].pdf(x), 1) - Pf)**2 * dist[u].pdf(x)
+
+            kde_eval = lambda x: kde(samplesX[:,u], x, w_opt[u])
+            #division_d = lambda x: np.divide(Pf,dist[u].pdf(x),out=np.zeros_like(x),where=dist[u].pdf(x)>1e-20)
+            division_d = lambda x: np.divide(Pf,dist[u].pdf(x),out=np.zeros_like(x),where=np.abs(dist[u].pdf(x))>=np.finfo(float).eps)
+            temp_1 = lambda x: np.minimum(kde_eval(x)* division_d(x), 1) - Pf
+            pdf_int = lambda x: np.power(temp_1(x),2) * dist[u].pdf(x)
+            #pdf_int = lambda x: np.multiply(np.power(np.minimum(np.divide(kde(samplesX[:,u], x, w_opt[u])* Pf,dist[u].pdf(x)), 1) - Pf,2) ,dist[u].pdf(x))
             # integration range from: [mean-5std, mean+5std]
-            B[u] = sp.integrate.quad(pdf_int, dist[u].mean()-15*dist[u].std(), dist[u].mean()+15*dist[u].std(), limit=1000)[0]
+            temp = sp.integrate.quad(pdf_int, dist[u].mean()-15*dist[u].std(), dist[u].mean()+15*dist[u].std(), limit=int(np.size(samplesX[:,u],0)/3))
+            B[u] = temp[0]
 
         # Sensitivity indices computed via equ. 4 with the samples obtained from
         # maximum-likelihood cross-validation method
@@ -189,7 +203,7 @@ def Sim_Sobol_indices(samplesX, Pf, distr):
             plt.plot(xi,yi)
         plt.show()
 
-    return [S_F1, exitflag, errormsg]
+    return [S_F1, exitflag, errormsg, w_opt]
 #
 # ==========================================================================
 # ===========================NESTED FUNCTIONS===============================
@@ -209,6 +223,7 @@ def w_opt_finder(w, N, x, idc, c):
     -----------------------------------------------------------------------
     Output:
     * mlcw_w: maximum-likelihood cross-validation for specfic w
+    
     -----------------------------------------------------------------------
     """
 
@@ -245,9 +260,7 @@ def kde(samplesX, x_eval, bw):
     * y: kernel density estimation evaluated at x_eval with bw
     -----------------------------------------------------------------------
     """
-
     kernel = sp.stats.gaussian_kde(samplesX)
-    kernel.set_bandwidth(bw)
+    kernel.set_bandwidth(bw/np.std(samplesX)) # Add normalization to KDE based on standard deviation 
     y = kernel.evaluate(x_eval)
-    #y = reshape(f(:), size(x_eval))
     return y

@@ -4,17 +4,18 @@ from ERANataf import ERANataf
 from ERADist import ERADist
 from aCS import aCS
 from corr_factor import corr_factor
-from Sim_Sobol_indices import Sim_Sobol_indices
 """
 ---------------------------------------------------------------------------
 Subset Simulation function (standard Gaussian space)
 ---------------------------------------------------------------------------
 Created by:
-Created by:
 Matthias Willer
 Felipe Uribe
 Luca Sardi
 Daniel Koutas
+
+Developed by: 
+Ivan Olarte-Rodriguez
 
 Engineering Risk Analysis Group
 Technische Universitat Munchen
@@ -36,7 +37,6 @@ Input:
 * g_fun                : limit state function
 * distr                : Nataf distribution object or
                          marginal distribution object of the input variables
-* sensitivity_analysis : implementation of sensitivity analysis: 1 - perform, 0 - not perform
 * samples_return       : return of samples: 0 - none, 1 - final sample, 2 - all samples          
 ---------------------------------------------------------------------------
 Output:
@@ -48,7 +48,7 @@ Output:
 * Pf_line   : failure probabilities corresponding to b_line
 * samplesU  : samples in the Gaussian standard space for each level
 * samplesX  : samples in the physical/original space for each level
-* S_F1      : vector of first order Sobol' indices
+* f_s_iid  : Independent Identically Distributed samples generated from last step
 ---------------------------------------------------------------------------
 Based on:
 1."Estimation of small failure probabilities in high dimentions by SubSim"
@@ -60,7 +60,7 @@ Based on:
 ---------------------------------------------------------------------------
 """
 
-def SuS(N, p0, g_fun, distr, sensitivity_analysis, samples_return):
+def SuS(N, p0, g_fun, distr, samples_return):
     if (N*p0 != np.fix(N*p0)) or (1/p0 != np.fix(1/p0)):
         raise RuntimeError('N*p0 and 1/p0 must be positive integers. Adjust N and p0 accordingly')
 
@@ -137,10 +137,10 @@ def SuS(N, p0, g_fun, distr, sensitivity_analysis, samples_return):
             delta[j] = np.sqrt( ((1-p_j)/(N*p_j))*(1+gamma) )  # coeff of variation(Ref. 2 Eq. 9)
 
         # select seeds
-        ord_seeds = u_j_sort[:np.int(nF[j]),:]  # ordered level seeds
+        ord_seeds = u_j_sort[:np.int64(nF[j]),:]  # ordered level seeds
 
         # randomize the totaling of the samples (to avoid bias)
-        idx_rnd   = np.random.permutation(np.int(nF[j]))
+        idx_rnd   = np.random.permutation(np.int64(nF[j]))
         rnd_seeds = ord_seeds[idx_rnd,:]     # non-ordered seeds
 
         # Samples return - all / all by default
@@ -161,7 +161,7 @@ def SuS(N, p0, g_fun, distr, sensitivity_analysis, samples_return):
     m = j
 
     # Final failure samples (non-ordered)
-    if samples_return != 0 or (samples_return == 0 and sensitivity_analysis == 1):
+    if samples_return != 0:
         samplesU['total'].append(u_j)
 
     # Samples return - all by default message
@@ -199,31 +199,18 @@ def SuS(N, p0, g_fun, distr, sensitivity_analysis, samples_return):
 
     # %% transform the samples to the physical/original space
     samplesX = list()
-    if samples_return != 0 or (samples_return == 0 and sensitivity_analysis == 1):
+    if samples_return != 0:
         for i in range(len(samplesU['total'])):
             samplesX.append( u2x(samplesU['total'][i][:,:]) )
 
-    if sensitivity_analysis == 1:
-        # resample 10000 failure samples
-        I_final = geval <= 0
-        id = np.random.choice(list(np.nonzero(I_final))[0], 10000)
-        f_s = samplesX[-1][id, :]
+    I_final = geval <= 0
+    id = np.random.choice(list(np.nonzero(I_final))[0], 10000)
+    f_s_iid = samplesX[-1][id, :]
 
-        S_F1, exitflag, errormsg = Sim_Sobol_indices(f_s, Pf_SuS, distr)
-
-        if exitflag == 1:
-            print("\n-First order indices: \n", S_F1)
-        else:
-            print('\n-Sensitivity analysis could not be performed, because: \n', errormsg)
-        if samples_return == 0:
-            samplesU['total'] = list()  # empty return samples U
-            samplesX = list()           # and X
-    else:
-        S_F1 = []
 
     # Convergence is not achieved message
     if j - 1 == max_it:
         print("\n-Exit with no convergence at max iterations \n")
 
-    return Pf_SuS, delta_SuS, b, Pf, b_line, Pf_line, samplesU, samplesX, S_F1
+    return Pf_SuS, delta_SuS, b, Pf, b_line, Pf_line, samplesU, samplesX, f_s_iid
 # %%END

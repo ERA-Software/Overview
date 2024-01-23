@@ -5,6 +5,7 @@ from ERANataf import ERANataf
 from ERADist import ERADist
 from SuS import SuS
 from aCS import aCS
+from Sim_Sensitivity import Sim_Sensitivity
 plt.close('all')
 """
 ---------------------------------------------------------------------------
@@ -12,11 +13,15 @@ Subset Simulation: Ex. 1 Ref. 2  - steel column
 ---------------------------------------------------------------------------
 Created by:
 Daniel Koutas
+
+Developed by:
+Ivan Olarte-Rodriguez
 Engineering Risk Analysis Group
 Technische Universitat Munchen
 www.bgu.tum.de/era
 ---------------------------------------------------------------------------
-First version: 2022-04
+Version 2023-12
+* Modification in Sensitivity Analysis calls
 ---------------------------------------------------------------------------
 Based on:
 1."Estimation of small failure probabilities in high dimentions by SuS"
@@ -59,14 +64,27 @@ g  = lambda x: 1 - ((x[:,0] + x[:,1]) / (x[:,3]*A_s) + (x[:,0]+x[:,1])*x[:,2]/(x
 
 #print(g(np.asarray([[0,1,2,3,4],[1,2,3,4,5],[2,3,4,5,6],[0.2,0.2,0.002,0.002,0.002]])))
 
+# %% Samples Return
+samples_return = 1
 # %% subset simulation
-N  = 8000        # Total number of samples for each level
+N  = 2000        # Total number of samples for each level
 p0 = 0.1         # Probability of each subset, chosen adaptively
 
 print('\n\nSUBSET SIMULATION: ')
-[Pf_SuS, delta_SuS, b, Pf, b_sus, pf_sus, samplesU, samplesX, S_F1] = SuS(N, p0, g, pi_pdf)
+[Pf_SuS, delta_SuS, b, Pf, b_sus, pf_sus, samplesU, samplesX, fs_iid] = SuS(N, p0, g, pi_pdf, samples_return)
 
-# MC solution given in paper
+# %% Implementation of sensitivity analysis
+
+# Computation of Sobol Indices
+compute_Sobol = True
+
+# Computation of EVPPI (based on standard cost of failure (10^8) and cost
+# of replacement (10^5)
+compute_EVPPI = False
+
+[S_F1,_] = Sim_Sensitivity(fs_iid, Pf_SuS, pi_pdf, compute_Sobol, compute_EVPPI)
+
+# %%MC solution given in paper
 # The MC results for S_F1_MC have the following COVs in the given order:
 # [16.1%, 0.2%, 1.8%, 7.4%, 15.1%]
 # Hence the first order indices (except for the second one) have quite high
@@ -80,11 +98,11 @@ S_F1_T_MC = [0.2365, 0.9896, 0.7354, 0.3595, 0.2145]
 # MC probability of failure
 Pf_MC = 8.35e-4
 
-# show results
+# %% show results
 print('\n***Reference Pf: ***', Pf_MC)
 print('\n***SuS Pf: ***', Pf_SuS)
 
-print('\n\n***MC sensitivity indices:')
+print('\n***MC Sobol indices:')
 print(S_F1_MC)
-print('\n***SuS sensitivity indices:')
+print('\n***SuS Sobol indices:')
 print(S_F1)

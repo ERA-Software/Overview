@@ -3,11 +3,16 @@
 ---------------------------------------------------------------------------
 Created by:
 Daniel Koutas
+
+Developed by:
+Ivan Olarte-Rodriguez
+
 Engineering Risk Analysis Group   
 Technische Universitat Munchen
 www.bgu.tum.de/era
 ---------------------------------------------------------------------------
-First version: 2022-04
+Current version 2023-12
+* Modification to Sensitivity Analysis Calls
 ---------------------------------------------------------------------------
 Based on:
 1."Estimation of small failure probabilities in high dimentions by SuS"
@@ -52,15 +57,29 @@ pi_pdf = ERANataf(pi_pdf,R);    % if you want to include dependence
 g  = @(x) 1 - ((x(:,1)+x(:,2))./(x(:,4).*A_s) + ...
          (x(:,1)+x(:,2)).*x(:,3)./(x(:,4).*W_s) .* ...
           pi^2.*x(:,5).*I_s./L^2 ./ (pi^2.*x(:,5).*I_s./L^2-(x(:,1)+x(:,2))));
+
+%% Samples return
+samples_return = 1;
       
 %% Sequential importance sampling
 N      = 8000;    % total number of samples for each level
 p0     =  0.1;    % Probability of each subset, chosen adaptively
 
 fprintf('SUBSET SIMULATION: \n');
-[Pf_SuS, delta_SuS, b, Pf, b_sus, pf_sus, samplesU, samplesX, S_F1] = SuS(N,p0,g,pi_pdf);
+[Pf_SuS, delta_SuS, b, Pf, b_sus, pf_sus, samplesU, samplesX, fs_iid] = SuS(N,p0,g,pi_pdf, samples_return);
 
-% MC solution given in paper
+%% Implementation of sensitivity analysis
+
+% Computation of Sobol Indices
+sensitivity_analysis = true;
+
+% Computation of EVPPI (based on standard cost of failure (10^8) and cost
+% of replacement (10^5)
+compute_EVPPI = false;
+
+[S_F1,~] = Sim_Sensitivity(fs_iid,Pf_SuS,pi_pdf,sensitivity_analysis,compute_EVPPI);
+
+%% MC solution given in paper
 % The MC results for S_F1_MC have the following COVs in the given order:
 % [16.1%, 0.2%, 1.8%, 7.4%, 15.1%]
 % Hence the first order indices (except for the second one) have quite high

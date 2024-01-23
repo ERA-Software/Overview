@@ -3,6 +3,7 @@ import matplotlib.pylab as plt
 from ERANataf import ERANataf
 from ERADist import ERADist
 from SuS import SuS
+from Sim_Sensitivity import Sim_Sensitivity
 plt.close('all')
 """
 ---------------------------------------------------------------------------
@@ -13,13 +14,14 @@ Matthias Willer
 Felipe Uribe
 Luca Sardi
 Daniel Koutas
+Ivan Olarte-Rodriguez
 
 Engineering Risk Analysis Group
 Technische Universitat Munchen
 www.bgu.tum.de/era
 ---------------------------------------------------------------------------
-Version 2022-04
-* inlcusion of sensitivity analysis
+Version 2023-12
+* Modification in Sensitivity Analysis calls
 ---------------------------------------------------------------------------
 Based on:
 1."Estimation of small failure probabilities in high dimentions by SuS"
@@ -51,23 +53,31 @@ g = lambda u: 1 - (np.sqrt(np.sum(u ** 2, 1)) / r) ** 2- (u[:, 0] / r) * ((1 - (
 N  = 2000        # Total number of samples for each level
 p0 = 0.1         # Probability of each subset, chosen adaptively
 
-# Implementation of sensitivity analysis: 1 - perform, 0 - not perform
-sensitivity_analysis = 0
-
 # Samples return: 0 - none, 1 - final sample, 2 - all samples
 samples_return = 1
 
 print('\n\nSUBSET SIMULATION: ')
-[Pf_SuS, delta_SuS, b, Pf, b_sus, pf_sus, samplesU, samplesX, S_F1] = SuS(N, p0, g, pi_pdf, sensitivity_analysis, samples_return)
+[Pf_SuS, delta_SuS, b, Pf, b_sus, pf_sus, samplesU, samplesX, fs_iid] = SuS(N, p0, g, pi_pdf, samples_return)
 
-# Reference values
+# %% Implementation of sensitivity analysis
+
+# Computation of Sobol Indices
+compute_Sobol = True
+
+# Computation of EVPPI (based on standard cost of failure (10^8) and cost
+# of replacement (10^5)
+compute_EVPPI = True
+
+[S_F1, S_EVPPI] = Sim_Sensitivity(fs_iid, Pf_SuS, pi_pdf, compute_Sobol, compute_EVPPI)
+
+# %% Reference values
 # The reference values for the first order indices
 S_F1_ref   = [0.1857, 0.1857]
 
 # Print reference values for the first order indices
-print("\n***Reference first order Sobol' indices: ***\n", S_F1_ref)
+print("\n\n***Reference first order Sobol' indices: ***\n", S_F1_ref)
 
-# reference solution
+# %% reference solution
 pf_ref = 1e-6
 
 # show p_f results
@@ -76,8 +86,6 @@ print('***SuS Pf: ', Pf_SuS, ' ***\n\n')
 
 # %% Plots
 # Options for font-family and font-size
-plt.rc('text', usetex=True)
-plt.rc('font', **{'family': 'serif', 'serif': ['Computer Modern']})
 plt.rc('font', size=12)
 plt.rc('axes', titlesize=20)    # fontsize of the axes title
 plt.rc('axes', labelsize=18)    # fontsize of the x and y labels
@@ -96,13 +104,15 @@ if samplesU['total']:
     ax.contour(X, Y, Z, [0], colors="r", linewidths=3)  # LSF
     for sample in samplesU['total']:
         ax.plot(*sample.T, ".", markersize=2)
+        plt.xlabel(r'$u_1$')
+        plt.ylabel(r'$u_2$', rotation=0)
 
 # Plot failure probability: Exact
 plt.figure()
 plt.yscale('log')
 plt.title('Failure probability estimate')
-plt.xlabel('Limit state function, $g$')
-plt.ylabel('Failure probability, $P_f$')
+plt.xlabel(r'Limit state function $g$')
+plt.ylabel(r'Failure probability $P_f$')
 
 # Plot failure probability: SuS
 plt.plot(b_sus,pf_sus,'r--', label='SuS')           # curve
