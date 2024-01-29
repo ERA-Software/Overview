@@ -96,7 +96,7 @@ compute_EVPPI = True
 S_F1_ref   = [0.2021, 0.1891]
 
 # Print reference values for the first order indices
-print("\n***Reference first order Sobol' indices: ***\n", S_F1_ref)
+print("\n\n***Reference first order Sobol' indices: ***\n", S_F1_ref)
 
 # exact solution
 lam      = 1

@@ -63,26 +63,40 @@ def Sim_Sensitivity(f_s_iid:np.ndarray, pf:float, distr:ERANataf, comp_Sobol:boo
     * S_EVPPI:          vector of EVPPI measures for each variable
     ---------------------------------------------------------------------------
     '''
+    exit_msg = ""
     #  Validate the required inputs
-    assert (isinstance(pf,float) and pf>0.0 and pf<=1.0)
-    assert (isinstance(distr,ERANataf) or isinstance(distr[0],ERADist))
-    assert (isinstance(f_s_iid,list) or isinstance(f_s_iid,np.ndarray))
+    if not (isinstance(pf,float) and pf>0.0 and pf<=1.0):
+        exit_msg += "pf not in allowed range [0,1]! "
+    if not (isinstance(distr,ERANataf) or isinstance(distr[0],ERADist)):
+        exit_msg += "distribution object not ERADist or ERANataf instance! "
+    if not (isinstance(f_s_iid,list) or isinstance(f_s_iid,np.ndarray)):
+        exit_msg += "failure samples not provided as list or numpy array! "
 
     # Transform the f_s_iid values if this is given as a list
     if isinstance(f_s_iid,list):
         f_s_iid:np.ndarray = np.array(f_s_iid)
+    
+    # check if sample array is empty
+    if not (f_s_iid.size != 0):
+        exit_msg += "failure samples list/array is empty! Check e.g. if samples_return > 0."
 
-    assert (isinstance(comp_EVPPI,bool))
-    assert (isinstance(comp_Sobol,bool))
+    if not (isinstance(comp_EVPPI,bool) and isinstance(comp_Sobol,bool)):
+        exit_msg += "comp_Sobol and comp_EVPPI have to be boolean! "
 
     # Validate the optional inputs
-
-    assert((isinstance(c_R,float) or isinstance(c_R,int)) and c_R > 0)
-    assert((isinstance(c_F,float) or isinstance(c_F,int)) and c_F > 0)
+    if not ((isinstance(c_R,float) or isinstance(c_R,int)) and 
+            (isinstance(c_F,float) or isinstance(c_F,int))):
+        exit_msg += "c_R and c_F have to be of type float or int! "
+    if not (c_R > 0 and c_F > 0):
+        exit_msg += "c_R and c_F have to be larger than 0! "
+    if not (normalization in ["crude", "normalized", "relative"]):
+        exit_msg += "normalization has to be 'crude', 'normalized', or 'relative! "
     
-    expectedEVPPIOutputType:tuple = ("crude","normalized","relative")
-
-    assert(normalization in expectedEVPPIOutputType)
+    if exit_msg != "":
+        print("\n\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+        print("Sensitivity computation aborted due to: \n", exit_msg)
+        print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+        return [], []
 
     # Compute the Sensitivity Indices
     S_F1:np.ndarray = np.empty_like(f_s_iid[0,:])

@@ -91,7 +91,7 @@ pf_ref    = 0.0062
 MC_S_F1  = [0.0811, 0.0045, 0.0398] # approximately read and extracted from paper
 
 # show results
-print('\n***Reference Pf: ***', pf_ref)
+print('\n\n***Reference Pf: ***', pf_ref)
 print('\n***SIS Pf: ***', Pf_SIS)
 
 print('\n\n***MC sensitivity indices:')

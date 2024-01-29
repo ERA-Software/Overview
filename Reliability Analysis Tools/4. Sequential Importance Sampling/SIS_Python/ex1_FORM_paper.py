@@ -120,7 +120,7 @@ S_F1_T_MC = [0.2365, 0.9896, 0.7354, 0.3595, 0.2145]
 Pf_MC = 8.35e-4
 
 # show results
-print('\n***Refernce Pf: ***', Pf_MC)
+print('\n\n***Refernce Pf: ***', Pf_MC)
 print('\n***SIS Pf: ***', Pf_SIS)
 
 print('\n\n***MC sensitivity indices:')

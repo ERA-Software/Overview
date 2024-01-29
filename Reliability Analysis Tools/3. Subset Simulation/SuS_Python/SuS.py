@@ -46,8 +46,8 @@ Output:
 * Pf        : intermediate failure probabilities
 * b_line    : limit state function values
 * Pf_line   : failure probabilities corresponding to b_line
-* samplesU  : samples in the Gaussian standard space for each level
-* samplesX  : samples in the physical/original space for each level
+* samplesU  : list with samples in the Gaussian standard space for each level
+* samplesX  : list in the physical/original space for each level
 * f_s_iid  : Independent Identically Distributed samples generated from last step
 ---------------------------------------------------------------------------
 Based on:
@@ -199,13 +199,13 @@ def SuS(N, p0, g_fun, distr, samples_return):
 
     # %% transform the samples to the physical/original space
     samplesX = list()
+    f_s_iid = list()
     if samples_return != 0:
-        for i in range(len(samplesU['total'])):
-            samplesX.append( u2x(samplesU['total'][i][:,:]) )
+        samplesX = [u2x(samplesU['total'][i][:,:]) for i in range(len(samplesU['total']))]
 
-    I_final = geval <= 0
-    id = np.random.choice(list(np.nonzero(I_final))[0], 10000)
-    f_s_iid = samplesX[-1][id, :]
+        I_final = geval <= 0
+        id = np.random.choice(list(np.nonzero(I_final))[0], 10000)
+        f_s_iid = samplesX[-1][id, :]
 
 
     # Convergence is not achieved message

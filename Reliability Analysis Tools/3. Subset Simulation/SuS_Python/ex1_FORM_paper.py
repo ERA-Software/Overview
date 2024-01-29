@@ -80,7 +80,7 @@ compute_Sobol = True
 # of replacement (10^5)
 compute_EVPPI = False
 
-[S_F1,_] = Sim_Sensitivity(fs_iid, Pf_SuS, pi_pdf, compute_Sobol, compute_EVPPI)
+[S_F1, _] = Sim_Sensitivity(fs_iid, Pf_SuS, pi_pdf, compute_Sobol, compute_EVPPI)
 
 # %%MC solution given in paper
 # The MC results for S_F1_MC have the following COVs in the given order:
@@ -97,7 +97,7 @@ S_F1_T_MC = [0.2365, 0.9896, 0.7354, 0.3595, 0.2145]
 Pf_MC = 8.35e-4
 
 # %% show results
-print('\n***Reference Pf: ***', Pf_MC)
+print('\n\n***Reference Pf: ***', Pf_MC)
 print('\n***SuS Pf: ***', Pf_SuS)
 
 print('\n***MC Sobol indices:')

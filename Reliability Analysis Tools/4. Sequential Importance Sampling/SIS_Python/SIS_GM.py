@@ -45,8 +45,8 @@ Input:
 Output:
 * Pr       : probability of failure
 * l        : total number of levels
-* samplesU : object with the samples in the standard normal space
-* samplesX : object with the samples in the original space
+* samplesU : list with the samples in the standard normal space
+* samplesX : list with the samples in the original space
 * k_fin    : final number of Gaussians in the mixture
 * W_final  : final weights
 * f_s_iid  : Independent Identically Distributed samples generated from last step
@@ -99,7 +99,8 @@ def SIS_GM(N, p, g_fun, distr, k_init, burn, tarCoV, samples_return):
     gk = g(uk)                                  # evaluations of g
 
     # save samples
-    samplesU.append(uk)
+    if samples_return not in [0, 1]:
+        samplesU.append(uk)
 
     # set initial subset and failure level
     gmu = np.mean(gk)
@@ -204,7 +205,7 @@ def SIS_GM(N, p, g_fun, distr, k_init, burn, tarCoV, samples_return):
         if COV_Sl < tarCoV:
             # samples return - last
             if samples_return == 1:
-                samplesU[0] = uk
+                samplesU = [uk]
             break
 
     # Samples return - all by default message
@@ -224,17 +225,13 @@ def SIS_GM(N, p, g_fun, distr, k_init, burn, tarCoV, samples_return):
 
     # transform the samples to the physical/original space
     samplesX = list()
+    f_s_iid = list()
     if samples_return != 0:
-        for i in range(len(samplesU)):
-            samplesX.append( u2x(samplesU[i][:,:]) )
+        samplesX = [u2x(samplesU[i][:,:]) for i in range(len(samplesU))]
     
-    # resample 10000 failure samples with final weights W
-    weight_id = np.random.choice(list(np.nonzero(I_final))[0], 10000, list(W_final[I_final]))
-    f_s_iid = samplesX[-1][weight_id, :]
-
-    if samples_return == 0:
-        samplesU = list()  # empty return samples U
-        samplesX = list()  # and X
+        # resample 10000 failure samples with final weights W
+        weight_id = np.random.choice(list(np.nonzero(I_final))[0], 10000, list(W_final[I_final]))
+        f_s_iid = samplesX[-1][weight_id, :]
 
     # Convergence is not achieved message
     if m == max_it:
