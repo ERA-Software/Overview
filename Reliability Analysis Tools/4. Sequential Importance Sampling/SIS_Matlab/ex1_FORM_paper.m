@@ -3,11 +3,18 @@
 ---------------------------------------------------------------------------
 Created by:
 Daniel Koutas
+
+Additional Developers:
+Ivan Olarte-Rodriguez
+
 Engineering Risk Analysis Group   
 Technische Universitat Munchen
 www.bgu.tum.de/era
 ---------------------------------------------------------------------------
 First version: 2022-04
+---------------------------------------------------------------------------
+Current Version 2023-10
+* Modification of Sensitivity Analysis Calls
 ---------------------------------------------------------------------------
 Comments:
 * The SIS method in combination with a Gaussian Mixture model can only be
@@ -52,6 +59,9 @@ R = eye(d);   % independent case
 % object with distribution information
 pi_pdf = ERANataf(pi_pdf,R);    % if you want to include dependence
 
+%% Samples return: 0 - none, 1 - final sample, 2 - all samples
+samples_return = 2;
+
 %% limit state function in the original space
 g  = @(x) 1 - ((x(:,1)+x(:,2))./(x(:,4).*A_s) + ...
          (x(:,1)+x(:,2)).*x(:,3)./(x(:,4)*W_s) .* ...
@@ -68,15 +78,29 @@ fprintf('\nSIS method: \n');
 method = 'GM';
 switch method
    case 'GM'
-      [Pf_SIS, lv, samplesU, samplesX, k_fin, S_F1] = SIS_GM(N, p, g, pi_pdf, k_init, burn, tarCOV);
+      [Pf_SIS, lv, samplesU, samplesX, k_fin, W_final, fs_iid] = SIS_GM(N, p, g, pi_pdf, k_init, burn, tarCOV, samples_return);
    case 'aCS'
-      [Pf_SIS, lv, samplesU, samplesX, S_F1] = SIS_aCS(N, p, g, pi_pdf, burn, tarCOV);
+      [Pf_SIS, lv, samplesU, samplesX, W_final, fs_iid] = SIS_aCS(N, p, g, pi_pdf, burn, tarCOV, samples_return);
+    case 'vMFNM'
+      [Pf_SIS, lv, samplesU, samplesX, W_final, k_fin, fs_iid] = SIS_vMFNM(N, p, g, pi_pdf, k_init, burn, tarCOV, samples_return);
    otherwise
-      error('Choose GM or aCS methods');
+      error('Choose GM, vMFNM or aCS methods');
 end
 
+%% Implementation of sensitivity analysis
 
-% MC solution given in paper
+% Computation of Sobol Indices
+sensitivity_analysis = true;
+
+% Computation of EVPPI (based on standard cost of failure (10^8) and cost
+% of replacement (10^5)
+compute_EVPPI = false;
+
+[S_F1,~] = Sim_Sensitivity(fs_iid,Pf_SIS,pi_pdf,sensitivity_analysis,compute_EVPPI);
+
+
+
+%% MC solution given in paper
 % The MC results for S_F1_MC have the following COVs in the given order:
 % [16.1%, 0.2%, 1.8%, 7.4%, 15.1%]
 % Hence the first order indices (except for the second one) have quite high

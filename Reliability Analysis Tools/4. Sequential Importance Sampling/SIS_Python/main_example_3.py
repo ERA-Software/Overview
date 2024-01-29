@@ -5,6 +5,8 @@ from ERANataf import ERANataf
 from ERADist import ERADist
 from SIS_GM import SIS_GM
 from SIS_aCS import SIS_aCS
+from SIS_vMFNM import SIS_vMFNM
+from Sim_Sensitivity import Sim_Sensitivity
 plt.close('all')
 """
 ---------------------------------------------------------------------------
@@ -20,13 +22,14 @@ Matthias Willer
 Peter Kaplan
 Luca Sardi
 Daniel Koutas
+Ivan Olarte-Rodriguez
 
 Engineering Risk Analysis Group
 Technische Universitat Munchen
 www.bgu.tum.de/era
 ---------------------------------------------------------------------------
-Version 2022-04
-* inlcusion of sensitivity analysis
+Current Version 2023-10
+* Modification of Sensitivity Analysis Calls
 ---------------------------------------------------------------------------
 Based on:
 1. "Sequential importance sampling for structural reliability analysis"
@@ -64,15 +67,30 @@ sensitivity_analysis = 1
 samples_return = 1
 
 print('\nSIS stage: ')
-method = 'GM'
+method = 'vMFNM'
 if method == 'GM':      # gaussian mixture
-    [Pf_SIS, l, samplesU, samplesX, k_fin, S_F1] = SIS_GM(N, p, g, pi_pdf, k_init, burn, tarCOV, sensitivity_analysis, samples_return)
+    [Pf_SIS, l, samplesU, samplesX, k_fin, W_final, fs_iid] = SIS_GM(N, p, g, pi_pdf, k_init, burn, tarCOV , 
+                                                                     samples_return)
 elif method == 'aCS':   # adaptive conditional sampling
-    [Pf_SIS, l, samplesU, samplesX, S_F1] = SIS_aCS(N, p, g, pi_pdf, burn, tarCOV, sensitivity_analysis, samples_return)
+    [Pf_SIS, l, samplesU, samplesX, W_final, fs_iid] = SIS_aCS(N, p, g, pi_pdf, burn, tarCOV,  samples_return)
+elif method == 'vMFNM':      # Von Mises-Fisher-Nakagami mixture
+    [Pf_SIS, l, samplesU, samplesX, W_final, k_fin, fs_iid] = SIS_vMFNM(N, p, g, pi_pdf, k_init, burn, tarCOV , 
+                                                                        samples_return)
 else:
-    print('\nChoose GM, or aCS methods')
+    print('\nChoose GM, vMFNM or aCS methods')
 
-# Reference values
+# %% Implementation of sensitivity analysis
+
+# Computation of Sobol Indices
+compute_Sobol = True
+
+# Computation of EVPPI (based on standard cost of failure (10^8) and cost
+# of replacement (10^5)
+compute_EVPPI = True
+
+[S_F1, S_EVPPI] = Sim_Sensitivity(fs_iid, Pf_SIS, pi_pdf, compute_Sobol, compute_EVPPI)
+
+# %% Reference values
 # The reference values for the first order indices
 S_F1_ref   = [0.0526, 0.0526]
 
@@ -85,6 +103,12 @@ pf_ref = 4.90e-3
 # show p_f results
 print('\n***Reference Pf: ', pf_ref, ' ***')
 print('***SIS Pf: ', Pf_SIS, ' ***\n')
+
+# Options for font-family and font-size
+plt.rc('font', size=12)
+plt.rc('axes', titlesize=20)    # fontsize of the axes title
+plt.rc('axes', labelsize=18)    # fontsize of the x and y labels
+plt.rc('figure', titlesize=20)  # fontsize of the figure title
 
 # %% Plot samples
 if samplesU:
@@ -100,4 +124,6 @@ if samplesU:
     ax.contour(X, Y, Z, [0], colors="r", linewidths=3)  # LSF
     for sample in samplesU:
         ax.plot(*sample.T, ".", markersize=2)
+    plt.xlabel(r'$u_1$')
+    plt.ylabel(r'$u_2$', rotation=0)
     plt.show()

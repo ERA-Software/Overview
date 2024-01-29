@@ -5,6 +5,8 @@ from ERANataf import ERANataf
 from ERADist import ERADist
 from SIS_GM import SIS_GM
 from SIS_aCS import SIS_aCS
+from SIS_vMFNM import SIS_vMFNM
+from Sim_Sensitivity import Sim_Sensitivity
 plt.close('all')
 """
 ---------------------------------------------------------------------------
@@ -12,11 +14,18 @@ Sequential importance sampling: Ex. 1 Ref. 2 - Steel column
 ---------------------------------------------------------------------------
 Created by:
 Daniel Koutas
+
+Additional Developers:
+Ivan Olarte-Rodriguez
+
 Engineering Risk Analysis Group
 Technische Universitat Munchen
 www.bgu.tum.de/era
 ---------------------------------------------------------------------------
 First version: 2022-04
+---------------------------------------------------------------------------
+Current Version 2023-10
+* Modification of Sensitivity Analysis Calls
 ---------------------------------------------------------------------------
 Comments:
 * The SIS method in combination with a Gaussian Mixture model can only be
@@ -65,6 +74,8 @@ g  = lambda x: 1 - ((x[:,0] + x[:,1]) / (x[:,3]*A_s) + (x[:,0]+x[:,1])*x[:,2]/(x
 
 #print(g(np.asarray([[0,1,2,3,4],[1,2,3,4,5],[2,3,4,5,6],[0.2,0.2,0.002,0.002,0.002]])))
 
+# Samples return: 0 - none, 1 - final sample, 2 - all samples
+samples_return = 1
 # %% Sequential Importance Sampling
 N      = 3000     # Total number of samples for each level
 p      = 0.1      # Number of chains per level
@@ -73,16 +84,28 @@ burn   = 0        # Burn-in period
 tarCOV = 1.5      # Target COV of weights
 
 print('\nSIS method: \n')
-method = 'aCS'
-
-if method == 'GM':
-    [Pf_SIS, lv, samplesU, samplesX, k_fin, S_F1] = SIS_GM(N, p, g, pi_pdf, k_init, burn, tarCOV)
-elif method == 'aCS':
-    [Pf_SIS, lv, samplesU, samplesX, S_F1] = SIS_aCS(N, p, g, pi_pdf, burn, tarCOV)
+method = 'vMFNM'
+if method == 'GM':      # gaussian mixture
+    [Pf_SIS, l, samplesU, samplesX, k_fin, fs_iid] = SIS_GM(N, p, g, pi_pdf, k_init, burn, tarCOV , samples_return)
+elif method == 'aCS':   # adaptive conditional sampling
+    [Pf_SIS, l, samplesU, samplesX, fs_iid] = SIS_aCS(N, p, g, pi_pdf, burn, tarCOV,  samples_return)
+elif method == 'vMFNM':      # Von Mises-Fisher-Nakagami mixture
+    [Pf_SIS, l, samplesU, samplesX, k_fin, fs_iid] = SIS_vMFNM(N, p, g, pi_pdf, k_init, burn, tarCOV , samples_return)
 else:
-    raise RuntimeError('Choose GM or aCS methods')
+    print('\nChoose GM, vMFNM or aCS methods')
 
-# MC solution given in paper
+# %% Implementation of sensitivity analysis
+
+# Computation of Sobol Indices
+compute_Sobol = True
+
+# Computation of EVPPI (based on standard cost of failure (10^8) and cost
+# of replacement (10^5)
+compute_EVPPI = True
+
+[S_F1, S_EVPPI] = Sim_Sensitivity(fs_iid, Pf_SIS, pi_pdf, compute_Sobol, compute_EVPPI)
+
+# %% MC solution given in paper
 # The MC results for S_F1_MC have the following COVs in the given order:
 # [16.1%, 0.2%, 1.8%, 7.4%, 15.1%]
 # Hence the first order indices (except for the second one) have quite high

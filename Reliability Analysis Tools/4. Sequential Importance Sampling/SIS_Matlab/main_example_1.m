@@ -5,14 +5,15 @@ Created by:
 Sebastian Geyer (s.geyer@tum.de)
 Matthias Willer
 Daniel Koutas
+Ivan Olarte-Rodriguez
 Engineering Risk Analysis Group   
 Technische Universitat Munchen
 www.bgu.tum.de/era
 ---------------------------------------------------------------------------
 First version: 2018-05
 ---------------------------------------------------------------------------
-Current version: 2022-04
-* Inclusion of sensitivity analysis
+Current Version 2023-10
+* Modification of Sensitivity Analysis Calls
 ---------------------------------------------------------------------------
 Comments:
 * The SIS method in combination with a Gaussian Mixture model can only be
@@ -34,17 +35,15 @@ d      = 2;          % number of dimensions
 pi_pdf = repmat(ERADist('standardnormal','PAR'),d,1);   % n independent rv
 
 % correlation matrix
-% R = eye(d);   % independent case
+R = eye(d);   % independent case
 
 % object with distribution information
-% pi_pdf = ERANataf(pi_pdf,R);    % if you want to include dependence
+pi_pdf = ERANataf(pi_pdf,R);    % if you want to include dependence
 
 %% limit state function
 beta = 3.5;
 g    = @(x) -sum(x,2)/sqrt(d) + beta;
 
-%% Implementation of sensitivity analysis: 1 - perform, 0 - not perform
-sensitivity_analysis = 0;
 
 %% Samples return: 0 - none, 1 - final sample, 2 - all samples
 samples_return = 1;
@@ -57,29 +56,43 @@ burn   = 0;       % burn-in period
 tarCOV = 1.5;     % target COV of weights
 
 fprintf('\nSIS method: \n');
-method = 'GM';
+method = 'aCS';
+
 switch method
    case 'GM'
-      [Pf_SIS, lv, samplesU, samplesX, k_fin, S_F1] = SIS_GM(N, p, g, pi_pdf, k_init, burn, tarCOV, sensitivity_analysis, samples_return);
+      [Pf_SIS, lv, samplesU, samplesX, k_fin, W_final, fs_iid] = SIS_GM(N, p, g, pi_pdf, k_init, burn, tarCOV, samples_return);
    case 'aCS'
-      [Pf_SIS, lv, samplesU, samplesX, S_F1] = SIS_aCS(N, p, g, pi_pdf, burn, tarCOV, sensitivity_analysis, samples_return);
+      [Pf_SIS, lv, samplesU, samplesX, W_final, fs_iid] = SIS_aCS(N, p, g, pi_pdf, burn, tarCOV, samples_return);
+    case 'vMFNM'
+      [Pf_SIS, lv, samplesU, samplesX, k_fin, W_final, fs_iid] = SIS_vMFNM(N, p, g, pi_pdf, k_init, burn, tarCOV, samples_return);
    otherwise
-      error('Choose GM or aCS methods');
+      error('Choose GM, vMFNM or aCS methods');
 end
+
+%% Implementation of sensitivity analysis
+
+% Computation of Sobol Indices
+compute_Sobol = true;
+
+% Computation of EVPPI (based on standard cost of failure (10^8) and cost
+% of replacement (10^5)
+compute_EVPPI = true;
+
+[S_F1, S_EVPPI] = Sim_Sensitivity(fs_iid, Pf_SIS, pi_pdf, compute_Sobol, compute_EVPPI);
 
 %% Reference values
 % The reference values for the first order indices
 S_F1_ref   = [0.0315, 0.0315];
 
 % Print reference values for the first order indices
-fprintf("***Reference first order Sobol' indices: ***\n");
+fprintf("\n\n***Reference first order Sobol' indices: ***\n");
 disp(S_F1_ref);
 
 % exact solution
 pf_ex = normcdf(-beta);
 
 % show p_f results
-fprintf('\n***Exact Pf: %g ***', pf_ex);
+fprintf('***Exact Pf: %g ***', pf_ex);
 fprintf('\n***SIS Pf: %g ***\n\n', Pf_SIS);
 
 %% Plots
@@ -98,6 +111,9 @@ if ~isempty(samplesU{1})
           u_j_samples = samplesU{j};
           plot(u_j_samples(:,1),u_j_samples(:,2),'.');
        end
+       xlabel('$u_1$','Interpreter','Latex','FontSize', 18);
+       ylabel('$u_2$','Interpreter','Latex','FontSize', 18);
+       set(get(gca,'ylabel'),'rotation',0);
        axis equal tight;
     end
 end

@@ -3,7 +3,6 @@ import scipy as sp
 from ERANataf import ERANataf
 from ERADist import ERADist
 from EMGM import EMGM
-from Sim_Sobol_indices import Sim_Sobol_indices
 """
 ---------------------------------------------------------------------------
 Sequential importance sampling with Gaussian mixture
@@ -18,13 +17,14 @@ Matthias Willer
 Peter Kaplan
 Luca Sardi
 Daniel Koutas
+Ivan Olarte Rodriguez
 
 Engineering Risk Analysis Group
 Technische Universitat Munchen
 www.bgu.tum.de/era
 ---------------------------------------------------------------------------
-Version 2022-04
-* Inclusion of sensitivity analysis
+Current version 2023-04
+* Modification of Sensitivity Analysis Calls
 ---------------------------------------------------------------------------
 Comments:
 * The SIS method in combination with a Gaussian Mixture model can only be
@@ -40,7 +40,6 @@ Input:
 * k_init               : initial number of Gaussians in the mixture model
 * burn                 : burn-in period
 * tarCoV               : target coefficient of variation of the weights
-* sensitivity_analysis : implementation of sensitivity analysis: 1 - perform, 0 - not perform
 * samples_return       : return of samples: 0 - none, 1 - final sample, 2 - all samples
 ---------------------------------------------------------------------------
 Output:
@@ -49,7 +48,8 @@ Output:
 * samplesU : object with the samples in the standard normal space
 * samplesX : object with the samples in the original space
 * k_fin    : final number of Gaussians in the mixture
-* S_F1     : vector of first order Sobol' indices
+* W_final  : final weights
+* f_s_iid  : Independent Identically Distributed samples generated from last step
 ---------------------------------------------------------------------------
 Based on:
 1. "Sequential importance sampling for structural reliability analysis"
@@ -58,7 +58,7 @@ Based on:
 ---------------------------------------------------------------------------
 """
 
-def SIS_GM(N, p, g_fun, distr, k_init, burn, tarCoV, sensitivity_analysis, samples_return):
+def SIS_GM(N, p, g_fun, distr, k_init, burn, tarCoV, samples_return):
     if (N*p != np.fix(N*p)) or (1/p != np.fix(1/p)):
         raise RuntimeError('N*p and 1/p must be positive integers. Adjust N and p accordingly')
 
@@ -203,7 +203,7 @@ def SIS_GM(N, p, g_fun, distr, k_init, burn, tarCoV, sensitivity_analysis, sampl
         print('\t*MH-GM accrate =', accrate[m])
         if COV_Sl < tarCoV:
             # samples return - last
-            if samples_return == 1 or (samples_return == 0 and sensitivity_analysis == 1):
+            if samples_return == 1:
                 samplesU[0] = uk
             break
 
@@ -218,36 +218,19 @@ def SIS_GM(N, p, g_fun, distr, k_init, burn, tarCoV, sensitivity_analysis, sampl
     # Calculation of the Probability of failure
     # accfin = accrate[m]
     const = np.prod(Sk)
-    #tmp1  = (gk < 0)
-    #tmp2  = -gk/sigmak[m+1]
-    #tmp3  = sp.stats.norm.cdf(tmp2)
-    #tmp4  = tmp1/tmp3
-    #Pr    = np.mean(tmp4)*const
     I_final = gk <= 0
     W_final = 1/sp.stats.norm.cdf(-gk/sigmak[m+1])
     Pr    = const * np.mean(I_final * W_final)
 
     # transform the samples to the physical/original space
     samplesX = list()
-    if samples_return != 0 or (samples_return == 0 and sensitivity_analysis == 1):
+    if samples_return != 0:
         for i in range(len(samplesU)):
             samplesX.append( u2x(samplesU[i][:,:]) )
-
-    ## sensitivity analysis
-    if  sensitivity_analysis == 1:
-        # resample 10000 failure samples with final weights W
-        weight_id = np.random.choice(list(np.nonzero(I_final))[0], 10000, list(W_final[I_final]))
-        f_s = samplesX[-1][weight_id, :]
-
-        [S_F1, exitflag, errormsg] = Sim_Sobol_indices(f_s, Pr, distr)
-        if exitflag == 1:
-            print("\n-First order indices: ")
-            print(S_F1)
-        else:
-            print('\n-Sensitivity analysis could not be performed, because: ')
-            print(errormsg)
-    else:
-        S_F1 = []
+    
+    # resample 10000 failure samples with final weights W
+    weight_id = np.random.choice(list(np.nonzero(I_final))[0], 10000, list(W_final[I_final]))
+    f_s_iid = samplesX[-1][weight_id, :]
 
     if samples_return == 0:
         samplesU = list()  # empty return samples U
@@ -257,4 +240,4 @@ def SIS_GM(N, p, g_fun, distr, k_init, burn, tarCoV, sensitivity_analysis, sampl
     if m == max_it:
         print("\n-Exit with no convergence at max iterations \n")
         
-    return Pr, l, samplesU, samplesX, k_fin, S_F1
+    return Pr, l, samplesU, samplesX, k_fin, W_final, f_s_iid

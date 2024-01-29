@@ -1,4 +1,5 @@
-function [Pr, l_tot, samplesU, samplesX, S_F1] = SIS_aCS(N, p, g_fun, distr, burn, tarCoV, sensitivity_analysis, samples_return)
+function [Pr, l_tot, samplesU, samplesX,W_final, f_s] = ...
+    SIS_aCS(N, p, g_fun, distr, burn, tarCoV, samples_return)
 %% Sequential importance sampling using adaptive conditional sampling
 %{
 ---------------------------------------------------------------------------
@@ -12,8 +13,8 @@ www.bgu.tum.de/era
 ---------------------------------------------------------------------------
 First version: 2018-05
 ---------------------------------------------------------------------------
-Current version: 2022-04
-* Inclusion of sensitivity analysis.
+Current version: 2023-07
+* Modification in the Sensitivity Analysis Output
 ---------------------------------------------------------------------------
 Comments:
 * The SIS method in combination with the adaptive conditional M-H sampler
@@ -39,7 +40,8 @@ Output:
 * l_tot    : total number of levels
 * samplesU : object with the samples in the standard normal space
 * samplesX : object with the samples in the original space
-* S_F1     : vector of first order Sobol' indices
+* W_final  : final weights
+* f_s      : i.i.d failure samples
 ---------------------------------------------------------------------------
 Based on:
 1."Sequential importance sampling for structural reliability analysis"
@@ -54,13 +56,13 @@ end
 %% transform to the standard Gaussian space
 if any(strcmp('Marginals',fieldnames(distr))) == 1   % use Nataf transform (dependence)
    dim = length(distr.Marginals);    % number of random variables (dimension)
-   u2x = @(u) distr.U2X(u);          % from u to x
+   u2x = @(u) reshape(distr.U2X(u),[],dim);          % from u to x
    
 else   % use distribution information for the transformation (independence)
    % Here we are assuming that all the parameters have the same distribution !!!
    % Adjust accordingly otherwise or use an ERANataf object
    dim = length(distr);                    % number of random variables (dimension)
-   u2x = @(u) distr(1).icdf(normcdf(u));   % from u to x   
+   u2x = @(u) reshape(distr(1).icdf(normcdf(u)),[],dim);   % from u to x   
 end
 
 %% LSF in standard space
@@ -223,7 +225,7 @@ for m = 1:max_it
    end   
    if COV_Sl < tarCoV
       % Samples return - last
-      if (samples_return == 1) || (samples_return == 0 && sensitivity_analysis == 1)
+      if (samples_return == 1) 
           samplesU{1} = uk;
       end
       break;
@@ -245,29 +247,18 @@ Pr = const * mean(I_final .* W_final);
 
 %% transform the samples to the physical/original space
 samplesX = cell(length(samplesU),1);
-if (samples_return ~= 0) || (samples_return == 0 && sensitivity_analysis == 1)
+if (samples_return ~= 0) 
     for i = 1:length(samplesU)
        samplesX{i} = u2x(samplesU{i});
     end
 end
 
-%% sensitivity analysis
-if sensitivity_analysis == 1
-    % resample 1e4 failure samples with final weights W
-    weight_id = randsample(find(I_final),1e4,'true',W_final(I_final));
-    f_s = samplesX{end}(weight_id,:);
-        
-    [S_F1, exitflag, errormsg] = Sim_Sobol_indices(f_s, Pr, distr);
-    if exitflag == 1
-        fprintf("\n-First order indices: \n");
-        disp(S_F1);
-    else
-        fprintf('\n-Sensitivity analysis could not be performed, because: \n')
-        fprintf(errormsg);
-    end
-else 
-    S_F1 = [];
-end
+%% Sample Return Handling
+
+% resample 1e4 failure samples with final weights W
+weight_id = randsample(find(I_final),1e4,'true',W_final(I_final));
+f_s = samplesX{end}(weight_id,:);
+
 
 if samples_return == 0
     samplesU = cell(1,1);  % empty return samples U

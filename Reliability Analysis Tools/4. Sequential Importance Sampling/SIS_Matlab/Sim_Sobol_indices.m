@@ -1,4 +1,4 @@
-function [S_F1, exitflag, errormsg] = Sim_Sobol_indices(samplesX, Pf, distr)
+function [S_F1, exitflag, errormsg, w_opt] = Sim_Sobol_indices(samplesX, Pf, distr)
 %% Compute first order Sobol' indices from failure samples
 %{
 ---------------------------------------------------------------------------
@@ -90,18 +90,20 @@ if ~(strcmp(int_method, 'integral') || strcmp(int_method, 'inverse'))
 end
 
 %% Find optimal bandwidth for kernel density estimation (kde)
-fprintf('\n-Calculating optimal bandwidths:\n');
+% Allocate the optimal weights variable
+w_opt = zeros(1,d);
 
 % Find the optimal bandwidth for each dimension with maximum likelihood 
 % cross validation (MLCV)
+
 for u=1:d
     options = optimset('Display', 'off', 'MaxIter', Maxiter, 'TolX', Tolx);
     w_opt_handle = @(w) w_opt_finder(w, N, samplesX(:,u), idcs_x, counts);
-    [w_opt(u), ~, ex_flag] = fminbnd(w_opt_handle, lb, ub(u), options);
+    [w_opt(u), ~, ex_flag,output] = fminbnd(w_opt_handle, lb, ub(u), options);
     % if optimal w not found, try fminbnd
     if ex_flag ~= 1
         disp('fminbnd was not successful, now trying fmincon\n')
-        [w_opt(u), ~, ex_flag] = fmincon(w_opt_handle, w0_vec(u), [], [], [], [], lb, ub(u), [], options);
+        [w_opt(u), ~, ex_flag,output] = fmincon(w_opt_handle, w0_vec(u), [], [], [], [], lb, ub(u), [], options);
     end
     
     % exitflag handling
@@ -133,11 +135,10 @@ for u=1:d
             return;
     end
 end
-fprintf('\nOptimal bandwidths: \n');
+fprintf('\n-Optimal bandwidths: \n');
 disp(w_opt);
-%% Compute sensitivity indices
-fprintf('\nCalculating sensitivity indices:\n');
 
+%% Compute sensitivity indices
 if strcmp(int_method, 'integral')
     for u=1:d
         pdf_int = @(x) (min(kde(samplesX(:,u), x, w_opt(u))* Pf ./ dist(u).pdf(x), 1) - Pf).^2 .* dist(u).pdf(x);
@@ -236,7 +237,7 @@ function mlcv_w = w_opt_finder(w, N, x, id, c)
     * w     : bandwidth
     * N     : total number of failure samples
     * x     : failure samples (samplesX)
-    * idc   : indices to reconstruct x (samplesX) from its unique array
+    * id   : indices to reconstruct x (samplesX) from its unique array
     * c     : vector of the multiplicity of the unique values in x (samplesX)
     -----------------------------------------------------------------------
     Output:

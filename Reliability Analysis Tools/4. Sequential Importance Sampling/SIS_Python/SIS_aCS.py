@@ -2,7 +2,6 @@ import numpy as np
 import scipy as sp
 from ERANataf import ERANataf
 from ERADist import ERADist
-from Sim_Sobol_indices import Sim_Sobol_indices
 """
 ---------------------------------------------------------------------------
 Sequential importance sampling with adaptive conditional sampling
@@ -18,13 +17,14 @@ Matthias Willer
 Peter Kaplan
 Luca Sardi
 Daniel Koutas
+Ivan Olarte Rodriguez
 
 Engineering Risk Analysis Group
 Technische Universitat Munchen
 www.bgu.tum.de/era
 ---------------------------------------------------------------------------
-Version 2022-04
-* Inclusion of sensitivity analysis
+Current version 2023-04
+* Modification of Sensitivity Analysis Calls
 ---------------------------------------------------------------------------
 Comments:
 * The SIS-method in combination with the adaptive conditional MH sampler
@@ -42,7 +42,6 @@ Input:
                          marginal distribution object of the input variables
 * burn                 : burn-in period
 * tarCoV               : target coefficient of variation of the weights
-* sensitivity_analysis : implementation of sensitivity analysis: 1 - perform, 0 - not perform
 * samples_return       : return of samples: 0 - none, 1 - final sample, 2 - all samples
 ---------------------------------------------------------------------------
 Output:
@@ -50,7 +49,8 @@ Output:
 * l_tot    : total number of levels
 * samplesU : object with the samples in the standard normal space
 * samplesX : object with the samples in the original space
-* S_F1     : vector of first order Sobol' indices
+* W_final  : final weights
+* f_s_iid  : Independent Identically Distributed samples generated from last step
 ---------------------------------------------------------------------------
 Based on:
 1. "Sequential importance sampling for structural reliability analysis"
@@ -59,7 +59,7 @@ Based on:
 ---------------------------------------------------------------------------
 """
 
-def SIS_aCS(N, p, g_fun, distr, burn, tarCoV, sensitivity_analysis, samples_return):
+def SIS_aCS(N, p, g_fun, distr, burn, tarCoV, samples_return):
     if (N*p != np.fix(N*p)) or (1/p != np.fix(1/p)):
         raise RuntimeError('N*p and 1/p must be positive integers. Adjust N and p accordingly')
 
@@ -103,6 +103,7 @@ def SIS_aCS(N, p, g_fun, distr, burn, tarCoV, sensitivity_analysis, samples_retu
     # Step 1
     # Perform the first Monte Carlo simulation
     uk = sp.stats.norm.rvs(size=(nsamlev,dim))    # initial samples
+    
     gk = g(uk)                                  # evaluations of g
 
     # save samples
@@ -136,7 +137,7 @@ def SIS_aCS(N, p, g_fun, distr, burn, tarCoV, sensitivity_analysis, samples_retu
 
         # Step 5: resample
         # seeds for chains
-        ind = np.random.choice(range(nsamlev),nchain,True,wnork)
+        ind = np.random.choice(np.arange(nsamlev),nchain,True,wnork)
         gk0 = gk[ind]
         uk0 = uk[ind,:]
 
@@ -229,7 +230,7 @@ def SIS_aCS(N, p, g_fun, distr, burn, tarCoV, sensitivity_analysis, samples_retu
         print('\t*aCS sigma =', sigmafk, '\t*aCS accrate =', accrate[m])
         if COV_Sl < tarCoV:
             # samples return - last
-            if samples_return == 1 or (samples_return == 0 and sensitivity_analysis == 1):
+            if samples_return == 1:
                 samplesU[0] = uk
             break
 
@@ -242,34 +243,17 @@ def SIS_aCS(N, p, g_fun, distr, burn, tarCoV, sensitivity_analysis, samples_retu
 
     # Calculation of the Probability of failure
     const = np.prod(Sk)
-    #tmp1  = (gk < 0)
-    #tmp2  = -gk/sigmak[m+1]
-    #tmp3  = sp.stats.norm.cdf(tmp2)
-    #tmp4  = tmp1/tmp3
-    #Pr    = np.mean(tmp4)*const
     I_final = gk <= 0
     W_final = 1 / sp.stats.norm.cdf(-gk / sigmak[m + 1])
     Pr = const * np.mean(I_final * W_final)
 
     # transform the samples to the physical/original space
-    if samples_return != 0 or (samples_return == 0 and sensitivity_analysis == 1):
+    if samples_return != 0:
         samplesX = [u2x(samplesU[i][:,:]) for i in range(len(samplesU))]
 
-    ## sensitivity analysis
-    if  sensitivity_analysis == 1:
-        # resample 10000 failure samples with final weights W
-        weight_id = np.random.choice(list(np.nonzero(I_final))[0], 10000, list(W_final[I_final]))
-        f_s = samplesX[-1][weight_id, :]
-
-        [S_F1, exitflag, errormsg] = Sim_Sobol_indices(f_s, Pr, distr)
-        if exitflag == 1:
-            print("\n-First order indices: ")
-            print(S_F1)
-        else:
-            print('\n-Sensitivity analysis could not be performed, because: ')
-            print(errormsg)
-    else:
-        S_F1 = []
+    # resample 10000 failure samples with final weights W
+    weight_id = np.random.choice(list(np.nonzero(I_final))[0], 10000, list(W_final[I_final]))
+    f_s_iid = samplesX[-1][weight_id, :]
 
     if samples_return == 0:
         samplesU = list()  # empty return samples U
@@ -279,4 +263,4 @@ def SIS_aCS(N, p, g_fun, distr, burn, tarCoV, sensitivity_analysis, samples_retu
     if m == max_it:
         print("\n-Exit with no convergence at max iterations \n")
 
-    return Pr, l_tot, samplesU, samplesX, S_F1
+    return Pr, l_tot, samplesU, samplesX, W_final, f_s_iid
