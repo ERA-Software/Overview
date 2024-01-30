@@ -1,19 +1,22 @@
-function [Pr, lv, N_tot, gamma_hat, samplesU, samplesX, k_fin, S_F1] = CEIS_SG(N, p, g_fun, distr, sensitivity_analysis, samples_return)
+function [Pr, lv, N_tot, gamma_hat, samplesU, samplesX, k_fin, W_final, f_s_iid] = ...
+    CEIS_SG(N, p, g_fun, distr, samples_return)
 %% Cross entropy-based importance sampling with Single Gaussian distribution
 %{
 ---------------------------------------------------------------------------
 Created by:
-Sebastian Geyer (s.geyer@tum.de)
+Sebastian Geyer
 Matthias Willer
 Fong-Lin Wu
 Daniel Koutas
+Ivan Olarte-Rodriguez
 
 Engineering Risk Analysis Group
 Technische Universitat Munchen
 www.bgu.tum.de/era
 ---------------------------------------------------------------------------
-Version 2022-04
-* Inclusion of sensitivity analysis
+Version 2023-08
+* Generation of i.i.d. samples for Sensitivity Analysis
+* Modified calls to LSF function to handle non-vectorized defintions
 ---------------------------------------------------------------------------
 Comments:
 * Remove redundant dimension adjustment of limit state function. It should
@@ -29,7 +32,6 @@ Input:
 * g_fun                : limit state function
 * distr                : Nataf distribution object or
                          marginal distribution object of the input variables
-* sensitivity_analysis : implementation of sensitivity analysis: 1 - perform, 0 - not perform
 * samples_return       : return of samples: 0 - none, 1 - final sample, 2 - all samples
 ---------------------------------------------------------------------------
 Output:
@@ -40,7 +42,8 @@ Output:
 * samplesU  : object with the samples in the standard normal space
 * samplesX  : object with the samples in the original space
 * k_fin     : final number of Gaussians in the mixture (for SG k_fin = 1)
-* S_F1      : vector of first order Sobol' indices
+* W_final   : final weights
+* f_s       : i.i.d failure samples
 ---------------------------------------------------------------------------
 Based on:
 1."Cross entropy-based importance sampling using Gaussian densities revisited"
@@ -58,13 +61,13 @@ end
 %% transform to the standard Gaussian space
 if any(strcmp('Marginals',fieldnames(distr))) == 1   % use Nataf transform (dependence)
    dim = length(distr.Marginals);    % number of random variables (dimension)
-   u2x = @(u) distr.U2X(u);          % from u to x
+   u2x = @(u) reshape(distr.U2X(u),[],dim);          % from u to x
    
 else   % use distribution information for the transformation (independence)
    % Here we are assuming that all the parameters have the same distribution !!!
    % Adjust accordingly otherwise
    dim = length(distr);                    % number of random variables (dimension)
-   u2x = @(u) distr(1).icdf(normcdf(u));   % from u to x   
+   u2x = @(u) reshape(distr(1).icdf(normcdf(u)),[],dim);   % from u to x   
 end
 
 %% LSF in standard space
@@ -95,8 +98,11 @@ for j = 1:max_it
    N_tot = N_tot+N;
    
    % evaluation of the limit state function
-   geval = G_LSF(X);
-   
+   geval = zeros(size(X,1),1);
+   for ii = 1:numel(geval)
+       geval(ii) = G_LSF(X(ii,:));
+   end
+
    % calculating h for the likelihood ratio
    h = mvnpdf(X, mu_hat, Si_hat);
    
@@ -108,7 +114,7 @@ for j = 1:max_it
     % Check convergence
     if gamma_hat(j) == 0
         % Samples return - last
-        if (samples_return == 1) || (samples_return == 0 && sensitivity_analysis == 1)
+        if (samples_return == 1)
             samplesU{1} = X;
         end
         break;
@@ -149,45 +155,29 @@ gamma_hat(lv+1:end) = [];
 %% Calculation of the Probability of failure
 W_final = mvnpdf(X, zeros(1,dim), eye(dim))./h;
 I_final = geval<=0;
-%Pr      = 1/N*sum(I_final*W_final);
 Pr      = 1/N*sum(I_final.*W_final);
 k_fin   = 1;
 
 %% transform the samples to the physical/original space
 samplesX = cell(length(samplesU),1);
-if (samples_return ~= 0) || (samples_return == 0 && sensitivity_analysis == 1)
-	for i = 1:length(samplesU)
-	   samplesX{i} = u2x(samplesU{i});
-	end
-end
-
-%% sensitivity analysis
-if sensitivity_analysis == 1
-    % resample 1e4 failure samples with final weights W
-    weight_id = randsample(find(I_final),1e4,'true',W_final(I_final));
-    f_s = samplesX{end}(weight_id,:);
-    
-    if size(f_s,1) == 0
-        fprintf("\n-Sensitivity analysis could not be performed, because no failure samples are available \n")
-        S_F1 = [];
-    else
-        [S_F1, exitflag, errormsg] = Sim_Sobol_indices(f_s, Pr, distr);
-        if exitflag == 1
-            fprintf("\n-First order indices: \n");
-            disp(S_F1);
-        else
-            fprintf('\n-Sensitivity analysis could not be performed, because: \n')
-            fprintf(errormsg);
+f_s_iid = [];
+if (samples_return ~= 0) 
+	for m = 1:length(samplesU)
+        if ~isempty(samplesU{m})
+            samplesX{m} = u2x(samplesU{m});
         end
     end
-	if samples_return == 0
-        samplesU = cell(1,1);  % empty return samples U
-        samplesX = cell(1,1);  % and X
+
+    %% Output for Sensitivity Analysis
+
+    % resample 1e4 failure samples with final weights W
+    weight_id = randsample(find(I_final),1e4,'true',W_final(I_final));
+    if ~isempty(samplesX{end})
+        f_s_iid = samplesX{end}(weight_id,:);
     end
-else 
-    S_F1 = [];
 end
 
+%% Error Messages
 % Convergence is not achieved message
 if j == max_it
     fprintf('-Exit with no convergence at max iterations \n\n');

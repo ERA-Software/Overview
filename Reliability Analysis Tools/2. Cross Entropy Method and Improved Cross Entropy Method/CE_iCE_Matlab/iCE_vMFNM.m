@@ -1,4 +1,5 @@
-function [Pr, lv, N_tot, samplesU, samplesX, k_fin, S_F1] = iCE_vMFNM(N, g_fun, distr, max_it, CV_target, k_init, sensitivity_analysis, samples_return)
+function [Pr, lv, N_tot, samplesU, samplesX, k_fin,W_final, f_s_iid] = ...
+    iCE_vMFNM(N, g_fun, distr, max_it, CV_target, k_init, samples_return)
 %% Improved cross entropy-based importance sampling with vMFN mixture model
 %{
 ---------------------------------------------------------------------------
@@ -15,13 +16,14 @@ Fong-Lin Wu
 Matthias Willer
 Peter Kaplan
 Daniel Koutas
+Ivan Olarte-Rodriguez
 
 Engineering Risk Analysis Group
 Technische Universitaet Muenchen
 www.bgu.tum.de/era
 ---------------------------------------------------------------------------
-Version 2022-04
-* Inclusion of sensitivity analysis
+Version 2023-08
+* Generation of i.i.d. samples for Sensitivity Analysis
 ---------------------------------------------------------------------------
 Comments:
 * Adopt draft scripts from Sebastian and reconstruct the code to comply
@@ -37,7 +39,6 @@ Input:
 * distr                : Nataf distribution object or marginal distribution object of the input variables
 * CV_target            : taeget correlation of variation of weights
 * k_init               : initial number of Gaussians in the mixture model
-* sensitivity_analysis : implementation of sensitivity analysis: 1 - perform, 0 - not perform
 * samples_return       : return of samples: 0 - none, 1 - final sample, 2 - all samples
 ---------------------------------------------------------------------------
 Output:
@@ -46,7 +47,8 @@ Output:
 * N_tot     : total number of samples
 * samplesU  : object with the samples in the standard normal space
 * samplesX  : object with the samples in the original space
-* S_F1      : vector of first order Sobol' indices
+* W_final   : Final Weights
+* f_s       : i.i.d failure samples
 ---------------------------------------------------------------------------
 Based on:
 1. Papaioannou, I., Geyer, S., & Straub, D. (2019).
@@ -74,7 +76,7 @@ if dim < 2
 end
 
 %% LSF in standard space
-G_LSF = @(u) g_fun(u2x(u));
+G_LSF = @(u) g_fun(reshape(u2x(u),[],dim));
 
 %% Initialization of variables and storage
 N_tot  = 0;        % total number of samples
@@ -117,7 +119,10 @@ for j = 1:max_it
     N_tot = N_tot + N;
     
     % evaluation of the limit state function
-    geval = G_LSF(X);
+    geval = zeros(size(X,1),1);
+    for ii = 1:numel(geval)
+        geval(ii) = G_LSF(X(ii,:));
+    end
     
     % initialize sigma_0
     if j==1,    sigma_t(1) = 10*mean(geval);    end
@@ -141,7 +146,7 @@ for j = 1:max_it
     Cov_x    = std(W_approx) / mean(W_approx);
     if Cov_x <= CV_target
         % Samples return - last
-        if (samples_return == 1) || (samples_return == 0 && sensitivity_analysis == 1)
+        if (samples_return == 1) 
             samplesU{1} = X;
         end
         break;
@@ -183,6 +188,9 @@ for j = 1:max_it
     
 end
 
+% Store the weights
+W_final = W;
+
 % Samples return - all by default message
 if ~ismember(samples_return, [0 1 2])
     fprintf('\n-Invalid input for samples return, all samples are returned by default \n');
@@ -197,39 +205,25 @@ Pr      = 1/N*sum(W(I));
 
 %% transform the samples to the physical/original space
 samplesX = cell(length(samplesU),1);
-if (samples_return ~= 0) || (samples_return == 0 && sensitivity_analysis == 1)
+f_s_iid = [];
+if (samples_return ~= 0)
 	for m = 1:length(samplesU)
-		samplesX{m} = u2x(samplesU{m});
-	end
-end
-
-%% sensitivity analysis
-if sensitivity_analysis == 1
-    % resample 1e4 failure samples with final weights W
-    weight_id = randsample(find(I),1e4,'true',W(I));
-    f_s = samplesX{end}(weight_id,:);
-    
-    if size(f_s,1) == 0
-        fprintf("\n-Sensitivity analysis could not be performed, because no failure samples are available \n")
-        S_F1 = [];
-    else
-        [S_F1, exitflag, errormsg] = Sim_Sobol_indices(f_s, Pr, distr);
-        if exitflag == 1
-            fprintf("\n-First order indices: \n");
-            disp(S_F1);
-        else
-            fprintf('\n-Sensitivity analysis could not be performed, because: \n')
-            fprintf(errormsg);
+        if ~isempty(samplesU{m})
+            samplesX{m} = u2x(samplesU{m});
         end
     end
-	if samples_return == 0
-        samplesU = cell(1,1);  % empty return samples U
-        samplesX = cell(1,1);  % and X
+
+    %% Output for Sensitivity Analysis
+
+    % resample 1e4 failure samples with final weights W
+    weight_id = randsample(find(I),1e4,'true',W(I));
+    if ~isempty(samplesX{end})
+        f_s_iid = samplesX{end}(weight_id,:);
     end
-else 
-    S_F1 = [];
 end
 
+
+%% Error Messages
 % Convergence is not achieved message
 if j == max_it
     fprintf('-Exit with no convergence at max iterations \n\n');

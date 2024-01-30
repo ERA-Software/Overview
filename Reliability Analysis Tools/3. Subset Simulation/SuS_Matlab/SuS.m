@@ -207,13 +207,15 @@ samplesX = cell(length(samplesU.total),1);
 f_s_iid = [];
 if (samples_return ~= 0) 
 	for i = 1:length(samplesU.total)
-		samplesX{i} = u2x(samplesU.total{i});
+        samplesX{i} = u2x(samplesU.total{i});
     end
     
     % resample 1e4 failure samples
     I_final = (geval <=0);
     id = randsample(find(I_final),1e4,'true');
-    f_s_iid = samplesX{end}(id,:);
+    if ~isempty(samplesX{end})
+        f_s_iid = samplesX{end}(id,:);
+    end
 end
 
 % Convergence is not achieved message
