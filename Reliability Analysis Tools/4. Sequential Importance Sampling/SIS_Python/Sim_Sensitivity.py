@@ -65,8 +65,8 @@ def Sim_Sensitivity(f_s_iid:np.ndarray, pf:float, distr:ERANataf, comp_Sobol:boo
     '''
     exit_msg = ""
     #  Validate the required inputs
-    if not (isinstance(pf,float) and pf>0.0 and pf<=1.0):
-        exit_msg += "pf not in allowed range [0,1]! "
+    if not ((isinstance(pf,float) or isinstance(pf,int)) and pf>0.0 and pf<=1.0):
+        exit_msg += "pf must be a scalar and in range [0,1]! "
     if not (isinstance(distr,ERANataf) or isinstance(distr[0],ERADist)):
         exit_msg += "distribution object not ERADist or ERANataf instance! "
     if not (isinstance(f_s_iid,list) or isinstance(f_s_iid,np.ndarray)):
@@ -78,7 +78,7 @@ def Sim_Sensitivity(f_s_iid:np.ndarray, pf:float, distr:ERANataf, comp_Sobol:boo
     
     # check if sample array is empty
     if not (f_s_iid.size != 0):
-        exit_msg += "failure samples list/array is empty! Check e.g. if samples_return > 0."
+        exit_msg += "failure samples list/array f_s_iid is empty! Check e.g. if samples_return > 0. "
 
     if not (isinstance(comp_EVPPI,bool) and isinstance(comp_Sobol,bool)):
         exit_msg += "comp_Sobol and comp_EVPPI have to be boolean! "

@@ -1,4 +1,4 @@
-function [EVPPI, exitflag, errormsg] = Sim_EVPPI(f_s, pf,c_R, c_F, X_marg, normalization, varargin)
+function [EVPPI, exitflag, errormsg] = Sim_EVPPI(f_s, pf, c_R, c_F, X_marg, normalization, varargin)
     % EVPPI CALCULATION FROM Samples
     %{
     ---------------------------------------------------------------------------
@@ -153,11 +153,10 @@ function [EVPPI, exitflag, errormsg] = Sim_EVPPI(f_s, pf,c_R, c_F, X_marg, norma
                     errormsg = ['fminbnd exitflag: ' num2str(ex_flag)];
                     return;
             end
-        end
-        fprintf('\nOptimal bandwidths: \n');
-        disp(w_opt);
-        
+        end        
     end
+    fprintf('\n-Optimal bandwidths: \n');
+    disp(w_opt);
 
 
     %% Print values
@@ -170,7 +169,7 @@ function [EVPPI, exitflag, errormsg] = Sim_EVPPI(f_s, pf,c_R, c_F, X_marg, norma
         return;
     else
         % Show the cost of replacement and cost of failure
-        fprintf("\n-cost of replacement: %.2f \n", p.Results.c_R);
+        fprintf("-cost of replacement: %.2f \n", p.Results.c_R);
         fprintf("-cost of failure: %.2f \n", p.Results.c_F);
     end
     

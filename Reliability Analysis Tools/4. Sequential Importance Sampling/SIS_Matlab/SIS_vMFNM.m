@@ -1,4 +1,4 @@
-function [Pr, l_tot, samplesU, samplesX, k_fin,W_final,f_s] = ...
+function [Pr, l_tot, samplesU, samplesX, k_fin,W_final,f_s_iid] = ...
     SIS_vMFNM(N, p, g_fun, distr, k_init, burn, tarCOV,samples_return)
 %% Sequential importance sampling using vMFN mixture model
 %{
@@ -91,8 +91,11 @@ uk = randn(nsamlev,dim);    % initial samples
 for k = 1:nsamlev
    gk(k) = g(uk(k,:));
 end
+
 % save samples
-samplesU{m+1} = uk;
+if ~ismember(samples_return, [0 1])
+    samplesU{m+1} = uk;
+end
 
 % set initial subset and failure level
 gmu = mean(gk);
@@ -232,22 +235,16 @@ Pr = const * mean(I_final .* W_final);
 
 %% transform the samples to the physical/original space
 samplesX = cell(length(samplesU),1);
+f_s_iid = [];
 if (samples_return ~= 0) 
     for i = 1:length(samplesU)
        samplesX{i} = u2x(samplesU{i});
     end
-end
 
-% resample indices according to sample weights, where only failure
-% samples receive a nonzero weight
-weight_id = randsample(find(I_final),1e4,'true',W_final(I_final));
-f_s = samplesX{end}(weight_id,:);
-
-% Set the samples to null should the variable 'samples_return' is set equal
-% to zero
-if samples_return == 0
-    samplesU = cell(1,1);  % empty return samples U
-    samplesX = cell(1,1);  % and X
+    % resample indices according to sample weights, where only failure
+    % samples receive a nonzero weight
+    weight_id = randsample(find(I_final),1e4,'true',W_final(I_final));
+    f_s_iid = samplesX{end}(weight_id,:);
 end
 
 return;

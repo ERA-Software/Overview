@@ -78,7 +78,7 @@ def Sim_Sensitivity(f_s_iid:np.ndarray, pf:float, distr:ERANataf, comp_Sobol:boo
     
     # check if sample array is empty
     if not (f_s_iid.size != 0):
-        exit_msg += "failure samples list/array is empty! Check e.g. if samples_return > 0."
+        exit_msg += "failure samples list/array is empty! Check e.g. if samples_return > 0. "
 
     if not (isinstance(comp_EVPPI,bool) and isinstance(comp_Sobol,bool)):
         exit_msg += "comp_Sobol and comp_EVPPI have to be boolean! "

@@ -1,5 +1,5 @@
-function [S_F1,S_EVPPI] = Sim_Sensitivity(f_s_iid,pf,distr,comp_sens_indices,...
-    comp_EVPPI,c_R,c_F,normalization,varargin)
+function [S_F1, S_EVPPI] = Sim_Sensitivity(f_s_iid, pf, distr, comp_Sobol,...
+    comp_EVPPI, c_R, c_F, normalization, varargin)
 %% Compute the Sensitivity Indices and EVPPI from Samples 
 %{
 ---------------------------------------------------------------------------
@@ -35,15 +35,14 @@ Comments:
 ---------------------------------------------------------------------------
 Input:
 - Required
-* f_s_iid           : Independent and identically distributed failure
-                      samples 
-* pf                : estimated failure probability
-* distr             : ERADist or ERANataf object containing the infos about 
-                      the random variables.
-* comp_sens_indices : boolean variable to indicate the computation of the
-                      sensitivity metrics based on Sobol Indices.
-* comp_EVPPI        : boolean variable to indicate the computation of EVPPI
-                      indices
+* f_s_iid       : Independent and identically distributed failure samples 
+* pf            : estimated failure probability
+* distr         : ERADist or ERANataf object containing the infos about 
+                  the random variables.
+* comp_Sobol    : boolean variable to indicate the computation of the
+                  Sobol Indices.
+* comp_EVPPI    : boolean variable to indicate the computation of EVPPI
+                  indices
 
 - Optional
 * c_R : Cost of replacement
@@ -56,6 +55,7 @@ Output:
 ---------------------------------------------------------------------------
 %}
 
+exit_msg = "";
 %% Generate Input Parser to evaluate the inputs to this function
 p = inputParser;
 
@@ -76,22 +76,51 @@ expectedEVPPIOutputType = {'crude','normalized','relative'};
 defaultEVPPIOutputType  = 'normalized';
 
 % Set the required parameters to be received by the function
+if ~validNum(f_s_iid)
+    exit_msg = append(exit_msg, 'f_s_iid is not numeric! ');
+end
+if isempty(f_s_iid)
+    exit_msg = append(exit_msg, "failure samples array f_s_iid is empty! Check e.g. if samples_return > 0. ");
+end
+if ~validScalarProb(pf)
+    exit_msg = append(exit_msg, "pf must be a scalar and in range [0,1]! ");
+end
+if ~validERAObj(distr)
+    exit_msg = append(exit_msg, "distribution object not ERADist, ERANataf or ERARosen instance! ");
+end
+if ~validBool(comp_Sobol)
+    exit_msg = append(exit_msg, "comp_Sobol has be boolean! ");
+end
+if ~validBool(comp_EVPPI)
+    exit_msg = append(exit_msg, "comp_EVPPI has to be boolean! ");
+end
+
+if exit_msg ~= ""
+    S_F1 = [];
+    S_EVPPI = [];
+    fprintf("\n\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
+    fprintf("Sensitivity computation aborted due to:\n %s", exit_msg)
+    fprintf("\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+    return
+end
+
 addRequired(p,'f_s',validNum);
 addRequired(p,'pf',validScalarProb);
 addRequired(p,'distr',validERAObj);
-addRequired(p,'comp_sens_indices',validBool);
+addRequired(p,'comp_Sobol',validBool);
 addRequired(p,'comp_EVPPI',validBool);
 
+
 % Set the optional parameters
-addOptional(p,"c_R",default_c_R,validScalarNum);
-addOptional(p,"c_F",default_c_F,validScalarNum);
-addOptional(p,'EVPPI_Output',defaultEVPPIOutputType,...
+addOptional(p,'c_R',default_c_R,validScalarNum);
+addOptional(p,'c_F',default_c_F,validScalarNum);
+addOptional(p,"EVPPI_Output",defaultEVPPIOutputType,...
                  @(x) any(validatestring(x,expectedEVPPIOutputType,1)));
 
 % Set parameters
 
 %% Validate the optional parameters
-if ~exist("c_R","var") || isempty(c_R)
+if ~exist('c_R','var') || isempty(c_R)
     c_R = default_c_R;
 end
 
@@ -104,13 +133,13 @@ if ~exist("normalization","var") || isempty(normalization)
 end
 
 %% Set the parsing object
-parse(p,f_s_iid,pf,distr,comp_sens_indices,comp_EVPPI,c_R,c_F,normalization,varargin{:});
+parse(p, f_s_iid, pf, distr, comp_Sobol, comp_EVPPI, c_R, c_F, normalization, varargin{:});
 
 %% Compute the Sensitivity Indices 
 
 S_F1 = [];
 w_opt = [];
-if p.Results.comp_sens_indices
+if p.Results.comp_Sobol
     fprintf("\n\nComputing Sobol Sensitivity Indices \n");
     [S_F1, exitflag, errormsg,w_opt] = Sim_Sobol_indices(p.Results.f_s, ...
                                                          p.Results.pf, ...

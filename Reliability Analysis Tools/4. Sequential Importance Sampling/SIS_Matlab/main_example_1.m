@@ -2,7 +2,7 @@
 %{
 ---------------------------------------------------------------------------
 Created by:
-Sebastian Geyer (s.geyer@tum.de)
+Sebastian Geyer
 Matthias Willer
 Daniel Koutas
 Ivan Olarte-Rodriguez

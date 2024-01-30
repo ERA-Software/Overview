@@ -3,7 +3,6 @@ import scipy as sp
 from ERANataf import ERANataf
 from ERADist import ERADist
 from EMGM import EMGM
-from Sim_Sobol_indices import Sim_Sobol_indices
 np.seterr(all='ignore')
 
 """
@@ -22,13 +21,14 @@ Matthias Willer
 Peter Kaplan
 Luca Sardi
 Daniel Koutas
+Ivan Olarte-Rodriguez
 
 Engineering Risk Analysis Group
 Technische Universitat Munchen
 www.bgu.tum.de/era
 ---------------------------------------------------------------------------
-Version 2022-04:
-* inlusion of sensitivity analysis
+Version 2023-04:
+* Modification to Sensitivity Analysis Calls
 ---------------------------------------------------------------------------
 Comments:
 * Adopt draft scripts from Sebastian and reconstruct the code to comply
@@ -44,16 +44,16 @@ Input:
 * distr                 : Nataf distribution object or marginal distribution object of the input variables
 * CV_target             : taeget correlation of variation of weights
 * k_init                : initial number of Gaussians in the mixture model
-* sensitivity_analysis  : implementation of sensitivity analysis: 1 - perform, 0 - not perform
 * samples_return        : return of samples: 0 - none, 1 - final sample, 2 - all samples
 ---------------------------------------------------------------------------
 Output:
 * Pr        : probability of failure
 * lv        : total number of levels
 * N_tot     : total number of samples
-* samplesU  : object with the samples in the standard normal space
-* samplesX  : object with the samples in the original space
-* S_F1      : vector of first order Sobol' indices
+* samplesU  : list with the samples in the standard normal space
+* samplesX  : list with the samples in the original space
+* W_final   : final weights
+* f_s_iid   : Independent Identically Distributed samples generated from last step
 ---------------------------------------------------------------------------
 Based on:
 1. Papaioannou, I., Geyer, S., & Straub, D. (2019).
@@ -66,7 +66,7 @@ Based on:
 """
 
 
-def iCE_GM(N, p, g_fun, distr, max_it, CV_target, k_init, sensitivity_analysis, samples_return):
+def iCE_GM(N, p, g_fun, distr, max_it, CV_target, k_init, samples_return):
     if (N * p != np.fix(N * p)) or (1 / p != np.fix(1 / p)):
         raise RuntimeError(
             "N*p and 1/p must be positive integers. Adjust N and p accordingly"
@@ -160,7 +160,7 @@ def iCE_GM(N, p, g_fun, distr, max_it, CV_target, k_init, sensitivity_analysis, 
         Cov_x = np.std(W_approx) / np.mean(W_approx)
         if Cov_x <= CV_target:
             # Samples return - last
-            if samples_return == 1 or (samples_return == 0 and sensitivity_analysis == 1):
+            if samples_return == 1:
                 samplesU.append(X)
             break
 
@@ -198,40 +198,24 @@ def iCE_GM(N, p, g_fun, distr, max_it, CV_target, k_init, sensitivity_analysis, 
     # Calculation of the Probability of failure
     Pr = 1 / N * sum(W[I])
 
+    # Store final weights
+    W_final = np.copy(W)
+
     # transform the samples to the physical/original space
     samplesX = list()
-    if samples_return != 0 or (samples_return == 0 and sensitivity_analysis == 1):
-        for i in range(len(samplesU)):
-            samplesX.append(u2x(samplesU[i][:, :]))
+    f_s_iid = list()
+    if samples_return != 0:
+        samplesX = [u2x(samplesU[i][:, :]) for i in range(len(samplesU))]
 
-    # %% sensitivity analysis
-    if sensitivity_analysis == 1:
         # resample 10000 failure samples with final weights W
         weight_id = np.random.choice(list(np.nonzero(I))[0],10000,list(W[I]))
-        f_s = samplesX[-1][weight_id,:]
-        S_F1 = []
-
-        if len(f_s) == 0:
-            print("\n-Sensitivity analysis could not be performed, because no failure samples are available")
-            S_F1 = []
-        else:
-            S_F1, exitflag, errormsg = Sim_Sobol_indices(f_s, Pr, distr)
-            if exitflag == 1:
-                print("\n-First order indices: \n", S_F1)
-            else:
-                print('\n-Sensitivity analysis could not be performed, because: \n', errormsg)
-        if samples_return == 0:
-            samplesU = list()  # empty return samples U
-            samplesX = list()  # and X
-    else:
-        S_F1 = []
+        f_s_iid = samplesX[-1][weight_id,:]
 
     # Convergence is not achieved message
     if j == max_it:
         print("\n-Exit with no convergence at max iterations \n")
         
-    return Pr, lv, N_tot, samplesU, samplesX, k_init, S_F1
-
+    return Pr, lv, N_tot, samplesU, samplesX, k_init, W_final, f_s_iid
 
 # ===========================================================================
 # =============================AUX FUNCTIONS=================================

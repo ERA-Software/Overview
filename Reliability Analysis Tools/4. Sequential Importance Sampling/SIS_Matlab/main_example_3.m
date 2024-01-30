@@ -2,7 +2,7 @@
 %{
 ---------------------------------------------------------------------------
 Created by:
-Sebastian Geyer (s.geyer@tum.de)
+Sebastian Geyer
 Matthias Willer
 Daniel Koutas
 Ivan Olarte-Rodriguez
@@ -44,7 +44,7 @@ g_fun = @(x) min([ 3.2 + (1/sqrt(d))*(x(:,1)+x(:,2)), ...
 g     = @(x) g_fun(x);
 
 %% Samples return: 0 - none, 1 - final sample, 2 - all samples
-samples_return = 1;
+samples_return = 2;
 
 %% Sequential importance sampling
 N      = 2000;    % total number of samples for each level

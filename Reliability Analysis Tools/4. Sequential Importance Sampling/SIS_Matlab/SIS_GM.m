@@ -1,4 +1,4 @@
-function [Pr, l_tot, samplesU, samplesX, k_fin,W_final, f_s] = ...
+function [Pr, l_tot, samplesU, samplesX, k_fin,W_final, f_s_iid] = ...
     SIS_GM(N, p, g_fun, distr, k_init, burn, tarCOV,  samples_return)
 %% Sequential importance sampling using Gaussian mixture
 %{
@@ -92,7 +92,9 @@ for k = 1:nsamlev
 end
 
 % save samples
-samplesU{m+1} = uk;
+if ~ismember(samples_return, [0 1])
+    samplesU{m+1} = uk;
+end
 
 % set initial subset and failure level
 gmu = mean(gk);
@@ -219,20 +221,14 @@ Pr = const * mean(I_final .* W_final);
 
 %% transform the samples to the physical/original space
 samplesX = cell(length(samplesU),1);
+f_s_iid = [];
 if (samples_return ~= 0) 
     for i = 1:length(samplesU)
        samplesX{i} = u2x(samplesU{i});
     end
-end
 
-%% Samples Return Handling
-
-weight_id = randsample(find(I_final),1e4,'true',W_final(I_final));
-f_s = samplesX{end}(weight_id,:);
-
-if samples_return == 0
-    samplesU = cell(1,1);  % empty return samples U
-    samplesX = cell(1,1);  % and X
+    weight_id = randsample(find(I_final),1e4,'true',W_final(I_final));
+    f_s_iid = samplesX{end}(weight_id,:);
 end
 
 % Convergence is not achieved message

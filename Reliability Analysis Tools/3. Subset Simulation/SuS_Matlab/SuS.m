@@ -204,22 +204,17 @@ b_line  = sort(b_line(:));
 
 %% transform the samples to the physical/original space
 samplesX = cell(length(samplesU.total),1);
+f_s_iid = [];
 if (samples_return ~= 0) 
 	for i = 1:length(samplesU.total)
 		samplesX{i} = u2x(samplesU.total{i});
-	end
+    end
+    
+    % resample 1e4 failure samples
+    I_final = (geval <=0);
+    id = randsample(find(I_final),1e4,'true');
+    f_s_iid = samplesX{end}(id,:);
 end
-
-% resample 1e4 failure samples
-I_final = (geval <=0);
-id = randsample(find(I_final),1e4,'true');
-f_s_iid = samplesX{end}(id,:);
-
-if samples_return == 0
-    samplesU.total = cell(1,1);  % empty return samples U
-    samplesX = cell(1,1);  % and X
-end
-
 
 % Convergence is not achieved message
 if j - 1 == max_it

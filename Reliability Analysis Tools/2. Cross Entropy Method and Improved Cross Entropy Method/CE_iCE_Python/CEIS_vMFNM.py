@@ -3,7 +3,6 @@ import scipy as sp
 from ERANataf import ERANataf
 from ERADist import ERADist
 from EMvMFNM import EMvMFNM
-from Sim_Sobol_indices import Sim_Sobol_indices
 """
 ---------------------------------------------------------------------------
 Cross entropy-based importance sampling with vMFNM-distribution
@@ -18,13 +17,14 @@ Assistant Developers:
 Matthias Willer
 Peter Kaplan
 Daniel Koutas
+Ivan Olarte-Rodriguez
 
 Engineering Risk Analysis Group
 Technische Universitat Munchen
 www.era.bgu.tum.de
 ---------------------------------------------------------------------------
-Version 2022-04:
-* inlusion of sensitivity analysis
+Version 2023-04:
+* Modification to Sensitivity Analysis Calls
 ---------------------------------------------------------------------------
 Comments:
 * The LSF must be coded to accept the full set of samples and no one by one
@@ -37,7 +37,6 @@ Input:
 * distr                 : Nataf distribution object or
                           marginal distribution object of the input variables
 * k_init                : initial number of distributions in the mixture model
-* sensitivity_analysis  : implementation of sensitivity analysis: 1 - perform, 0 - not perform
 * samples_return        : return of samples: 0 - none, 1 - final sample, 2 - all samples
 ---------------------------------------------------------------------------
 Output:
@@ -48,7 +47,8 @@ Output:
 * samplesU  : object with the samples in the standard normal space
 * samplesX  : object with the samples in the original space
 * k_fin     : final number of distributions in the mixture
-* S_F1      : vector of first order Sobol' indices
+* W_final   : final weights
+* f_s_iid   : Independent Identically Distributed samples generated from last step
 ---------------------------------------------------------------------------
 Based on:
 1."Cross entropy-based importance sampling using Gaussian densities revisited"
@@ -61,7 +61,7 @@ Based on:
 """
 
 
-def CEIS_vMFNM(N, p, g_fun, distr, k_init, sensitivity_analysis, samples_return):
+def CEIS_vMFNM(N, p, g_fun, distr, k_init, samples_return):
     if (N * p != np.fix(N * p)) or (1 / p != np.fix(1 / p)):
         raise RuntimeError(
             "N*p and 1/p must be positive integers. Adjust N and p accordingly"
@@ -149,7 +149,7 @@ def CEIS_vMFNM(N, p, g_fun, distr, k_init, sensitivity_analysis, samples_return)
         if gamma_hat[j] == 0:
             k_fin = len(alpha_cur)
             # Samples return - last
-            if samples_return == 1 or (samples_return == 0 and sensitivity_analysis == 1):
+            if samples_return == 1:
                 samplesU.append(X)
             break
 
@@ -178,43 +178,28 @@ def CEIS_vMFNM(N, p, g_fun, distr, k_init, sensitivity_analysis, samples_return)
     lv = j
     gamma_hat = gamma_hat[: lv + 1]
 
+    # Store the final  weights
+    W_final = np.exp(W_log)
+
     # Calculation of Probability of failure
     I = geval <= gamma_hat[j]
-    Pr = 1 / N * np.sum(np.exp(W_log[I, :]))
+    Pr = 1 / N * np.sum(W_final[I, :])
 
     # transform the samples to the physical/original space
     samplesX = list()
-    if samples_return != 0 or (samples_return == 0 and sensitivity_analysis == 1):
-        for i in range(len(samplesU)):
-            samplesX.append(u2x(samplesU[i][:, :]))
+    f_s_iid = list()
+    if samples_return != 0:
+        samplesX = [u2x(samplesU[i][:, :]) for i in range(len(samplesU))]
 
-    # %% sensitivity analysis
-    if sensitivity_analysis == 1:
         # resample 10000 failure samples with final weights W
-        weight_id = np.random.choice(list(np.nonzero(I))[0],10000,list(np.exp(W_log[I, :])))
-        f_s = samplesX[-1][weight_id,:]
-        S_F1 = []
-
-        if len(f_s) == 0:
-            print("\n-Sensitivity analysis could not be performed, because no failure samples are available")
-            S_F1 = []
-        else:
-            S_F1, exitflag, errormsg = Sim_Sobol_indices(f_s, Pr, distr)
-            if exitflag == 1:
-                print("\n-First order indices: \n", S_F1)
-            else:
-                print('\n-Sensitivity analysis could not be performed, because: \n', errormsg)
-        if samples_return == 0:
-            samplesU = list()  # empty return samples U
-            samplesX = list()  # and X
-    else:
-        S_F1 = []
+        weight_id = np.random.choice(list(np.nonzero(I))[0],10000,list(W_final[I, :]))
+        f_s_iid = samplesX[-1][weight_id,:]
 
     # Convergence is not achieved message
     if j == max_it:
         print("\n-Exit with no convergence at max iterations \n")
         
-    return Pr, lv, N_tot, gamma_hat, samplesU, samplesX, k_fin, S_F1
+    return Pr, lv, N_tot, gamma_hat, samplesU, samplesX, k_fin, W_final, f_s_iid
 
 
 # ===========================================================================
@@ -399,7 +384,7 @@ def likelihood_ratio_log(X, mu, kappa, omega, m, alpha):
             h_log[:, p] = logpdf_vMF[:, p] + logpdf_N[:, p] + np.log(alpha[p])
 
         # mixture log pdf
-        h_log = logsumexp(h_log, 1)
+        h_log = sp.special.logsumexp(h_log, axis=1,keepdims = True)
 
     # unit hypersphere uniform log pdf
     A = np.log(dim) + np.log(np.pi ** (dim / 2)) - sp.special.gammaln(dim / 2 + 1)
@@ -472,26 +457,6 @@ def logbesseli(nu, x):
         logb = -np.log(np.sqrt(2 * np.pi * nu)) + nu * eta - 0.25 * np.log(square)
 
     return logb
-
-
-# ===========================================================================
-# --------------------------------------------------------------------------
-# Compute log(sum(exp(x),dim)) while avoiding numerical underflow.
-#   By default dim = 0 (columns).
-# Written by Michael Chen (sth4nth@gmail.com).
-# --------------------------------------------------------------------------
-def logsumexp(x, dim=0):
-
-    # subtract the largest in each column
-    y = np.max(x, axis=dim).reshape(-1, 1)
-    x = x - y
-    s = y + np.log(np.sum(np.exp(x), axis=dim)).reshape(-1, 1)
-    # ===========================================================================
-    i = np.where(np.invert(np.isfinite(y).squeeze()))
-    s[i] = y[i]
-
-    return s
-
 
 # ===========================================================================
 # --------------------------------------------------------------------------

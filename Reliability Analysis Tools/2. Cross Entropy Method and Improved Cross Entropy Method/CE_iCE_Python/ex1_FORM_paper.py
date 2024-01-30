@@ -14,6 +14,9 @@ from CEIS_SG import CEIS_SG
 from CEIS_GM import CEIS_GM
 from CEIS_vMFNM import CEIS_vMFNM
 
+# Sensitivity Analysis
+from Sim_Sensitivity import Sim_Sensitivity
+
 plt.close('all')
 """
 ---------------------------------------------------------------------------
@@ -21,11 +24,16 @@ Improved cross entropy method: Ex. 1 Ref. 3 - strongly nonlinear and non-monoton
 ---------------------------------------------------------------------------
 Created by:
 Daniel Koutas
+
+Assistant Developers:
+Ivan Olarte-Rodriguez 
+
 Engineering Risk Analysis Group
 Technische Universitat Munchen
 www.bgu.tum.de/era
 ---------------------------------------------------------------------------
-First version: 2022-04
+Version 2023-12
+* Modification of Sensitivity Analysis Calls
 ---------------------------------------------------------------------------
 Based on:
 1. Papaioannou, I., Geyer, S., & Straub, D. (2019).
@@ -74,43 +82,58 @@ g  = lambda x: 1 - ((x[:,0] + x[:,1]) / (x[:,3]*A_s) + (x[:,0]+x[:,1])*x[:,2]/(x
 
 # Definition of additional values
 max_it    = 100   # maximum number of iteration steps per simulation
-N         = 1000  # definition of number of samples per level
+N         = 4000  # definition of number of samples per level
 CV_target = 2.0   # target CV
 
 # CE method
 p      = 0.1  # quantile value to select samples for parameter update
 k_init = 1    # initial number of distributions in the Mixture models (GM/vMFNM)
 
+# %% Samples return: 0 - none, 1 - final sample, 2 - all samples
+samples_return = 1
+
+# %% Run methods
 print("\nCE-based IS stage: ")
-method = "iCE_SG"
-# method = "iCE_GM"
-# method = "iCE_vMFNM"
-# method = "CE_SG"
+#method = "iCE_SG"
+method = "iCE_GM"
+#method = "iCE_vMFNM"
+#method = "CE_SG"
 # method = "CE_GM"
-# method = "CE_vMFNM"
+#method = "CE_vMFNM"
 
 if method == "iCE_SG": # improved CE with single gaussian
-    [Pr, l, N_tot, samplesU, samplesX, S_F1] = iCE_SG(N, p, g, pi_pdf, max_it, CV_target)
+    [Pf_CE, lv, N_tot, samplesU, samplesX, W_final, fs_iid] = iCE_SG(N, p, g, pi_pdf, max_it, CV_target, samples_return)
 
 elif method == "iCE_GM": # improved CE with gaussian mixture
-    [Pr, l, N_tot, samplesU, samplesX, k_fin, S_F1] = iCE_GM(N, p, g, pi_pdf, max_it, CV_target, k_init)
+    [Pf_CE, lv, N_tot, samplesU, samplesX, k_fin, W_final, fs_iid] = iCE_GM(N, p, g, pi_pdf, max_it, CV_target, k_init, samples_return)
 
 elif method == "iCE_vMFNM": # improved CE with adaptive vMFN mixture
-    [Pr, l, N_tot, samplesU, samplesX, k_fin, S_F1] = iCE_vMFNM(N, p, g, pi_pdf, max_it, CV_target, k_init)
+    [Pf_CE, l, N_tot, samplesU, samplesX, k_fin, W_final, fs_iid] = iCE_vMFNM(N, p, g, pi_pdf, max_it, CV_target, k_init, samples_return)
 
 elif method == "CE_SG": # single gaussian
-    [Pr, l, N_tot, gamma_hat, samplesU, samplesX, k_fin, S_F1] = CEIS_SG(N, p, g, pi_pdf)
+    [Pf_CE, l, N_tot, gamma_hat, samplesU, samplesX, k_fin, W_final, fs_iid] = CEIS_SG(N, p, g, pi_pdf, samples_return)
 
 elif method == "CE_GM": # gaussian mixture
-    [Pr, l, N_tot, gamma_hat, samplesU, samplesX, k_fin, S_F1] = CEIS_GM(N, p, g, pi_pdf, k_init)
+    [Pf_CE, l, N_tot, gamma_hat, samplesU, samplesX, k_fin, W_final, fs_iid] = CEIS_GM(N, p, g, pi_pdf, k_init, samples_return)
 
 elif method == "CE_vMFNM": # adaptive vMFN mixture
-    [Pr, l, N_tot, gamma_hat, samplesU, samplesX, k_fin, S_F1] = CEIS_vMFNM(N, p, g, pi_pdf, k_init)
+    [Pf_CE, l, N_tot, gamma_hat, samplesU, samplesX, k_fin, W_final, fs_iid] = CEIS_vMFNM(N, p, g, pi_pdf, k_init, samples_return)
 
 else:
     print("\nChoose SG, GM, or vMFNM methods")
 
-# MC solution given in paper
+# %% Implementation of sensitivity analysis
+
+# Computation of Sobol Indices
+compute_EVPPI = True
+
+# Computation of EVPPI (based on standard cost of failure (10^8) and cost
+# of replacement (10^5)
+compute_EVPPI = False
+
+[S_F1, S_EVPPI] = Sim_Sensitivity(fs_iid, Pf_CE, pi_pdf, compute_EVPPI, compute_EVPPI)
+
+# %% MC solution given in paper
 # The MC results for S_F1_MC have the following COVs in the given order:
 # [16.1%, 0.2%, 1.8%, 7.4%, 15.1%]
 # Hence the first order indices (except for the second one) have quite high
@@ -125,8 +148,8 @@ S_F1_T_MC = [0.2365, 0.9896, 0.7354, 0.3595, 0.2145]
 Pf_MC = 8.35e-4
 
 # show results
-print('\n***Reference Pf: ***', Pf_MC)
-print('\n***CE Pf: ***', Pr)
+print('\n\n***Reference Pf: ***', Pf_MC)
+print('\n***CE Pf: ***', Pf_CE)
 
 print('\n\n***MC sensitivity indices:')
 print(S_F1_MC)
