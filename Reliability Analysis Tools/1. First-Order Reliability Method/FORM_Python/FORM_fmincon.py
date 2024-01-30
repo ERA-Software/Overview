@@ -1,8 +1,12 @@
-import numpy as np
 import scipy as sp
 from ERANataf import ERANataf
 from ERADist import ERADist
-from FORM_Sobol_indices import FORM_Sobol_indices
+
+try:
+    import autograd.numpy as np
+    from autograd import grad
+except:
+    import numpy as np
 
 """
 ---------------------------------------------------------------------------
@@ -35,9 +39,6 @@ Input:
 * dg                    : anonynmous function containing the analytical 
                           gradient of the limit state function (optional)
 * distr                 : ERANataf-Object containing the distribution
-* sensitivity_analysis  : implementation of sensitivity analysis: 
-                          1 - perform, 
-                          0 - not perform
 
 Optional (optimization parameters for design point search):
 
@@ -49,13 +50,15 @@ Output:
 * u_star : design point in the standard space
 * x_star : design point in the original space
 * beta   : reliability index
+* alpha  : FORM sensitivity indices
 * Pf     : probability of failure
-* S_F1   : vector of first-order indices
-* S_F1_T : vector of total-effect indices
+
+
 ---------------------------------------------------------------------------
 """
 
-def FORM_fmincon(g, dg, distr,sensitivity_analysis, u0 = 1, tol = 1e-6, maxit = 500):
+def FORM_fmincon(g, dg, distr:ERANataf, u0:float = 0.1, 
+                 tol:float = 1e-6, maxit:int = 500):
 
     #  initial check if there exists a Nataf object
     if not(isinstance(distr, ERANataf)):
@@ -64,10 +67,10 @@ def FORM_fmincon(g, dg, distr,sensitivity_analysis, u0 = 1, tol = 1e-6, maxit = 
     d = len(distr.Marginals)
 
     # objective function
-    dist_fun = lambda u: np.linalg.norm(u)
+    dist_fun = lambda u: np.linalg.norm(np.ravel(u),2)
 
-    # arameters of the minimize function
-    u0 = u0*np.ones((1,d))  # initial search point
+    # parameters of the minimize function
+    u0 = np.squeeze(u0*np.ones((1,d)))  # initial search point
 
     # nonlinear constraint: H(u) <= 0
     H    = lambda u: g(distr.U2X(u))
@@ -77,6 +80,34 @@ def FORM_fmincon(g, dg, distr,sensitivity_analysis, u0 = 1, tol = 1e-6, maxit = 
 
     #  minimize with constraints without analytical gradients
     if dg == []:
+        
+        fd_grad = False
+        try:     
+            # check if autograd works       
+            dg = grad(g)
+            test_dg = dg(distr.U2X(np.random.randn(1,d)))
+            del test_dg
+
+            def dgu(u):
+                [x, J] = distr.U2X(u, Jacobian = True)
+                grad   = np.dot(J , dg(x))
+                return grad.ravel()
+        except:
+            # use finite differences if autograd fails
+            fd_grad = True
+            epsil     = lambda gg: 1e-04 * np.maximum(np.abs(gg),1e-06)
+            dg      = lambda xg,ggg: (g( np.add( xg, np.diag(epsil(ggg)*np.ones(d)) ) ) - ggg) / epsil(ggg)
+        
+            def dgu(u):
+                [x, J] = distr.U2X(np.ravel(u), Jacobian = True)
+                
+                val = g(x)
+                derv = dg(x,np.ravel(val))
+                grad   = np.dot(J , derv )
+
+                return grad.ravel()
+        
+        # Run the optimization function without the gradient information
         cons = ({'type': 'ineq', 'fun': lambda u: -H(u)})
         res = sp.optimize.minimize(dist_fun, u0, constraints=cons, method=alg, options = {'maxiter' : maxit, 'ftol' : tol})
 
@@ -85,7 +116,7 @@ def FORM_fmincon(g, dg, distr,sensitivity_analysis, u0 = 1, tol = 1e-6, maxit = 
         
         def dgu(u):
             [x, J] = distr.U2X(u, Jacobian = True)
-            grad   = J @ dg(x)
+            grad   = np.dot(J , dg(x))
             return grad.ravel()
         
         cons = ({'type': 'ineq', 'fun': lambda u: -H(u), 'jac': lambda u: -dgu(u)})
@@ -100,33 +131,13 @@ def FORM_fmincon(g, dg, distr,sensitivity_analysis, u0 = 1, tol = 1e-6, maxit = 
     x_star = distr.U2X(u_star)
     Pf     = sp.stats.norm.cdf(-beta)
 
-    #  sensitivity analysis
-    if sensitivity_analysis == 1:
-        [S_F1, S_F1_T, exitflag, errormsg] = FORM_Sobol_indices(u_star/beta, beta, Pf)
-    else:
-        S_F1 = []
-        S_F1_T = []
-
+    # Compute the FORM alpha-coefficients
+    #-dG_dU(u_star)./(norm(dG_dU(u_star),2));
+    alpha = dgu(np.ravel(u_star))/np.linalg.norm(dgu(np.ravel(u_star)),2)
 
     # print results
     print('\n*scipy.optimize.minimize() with ', alg, ' Method\n')
     print(' ', it, ' iterations... Reliability index = ', beta, ' --- Failure probability = ', Pf, '\n\n')
 
-    # print first order and total-effect indices
-    if sensitivity_analysis == 1:
-        if hasattr(distr, 'Marginals'):
-            if not (distr.Rho_X == np.eye(len(distr.Marginals))).all():
-                print("\n\n!!!!!!!!!!!!!!!!!!!!!!!!!!!! WARNING: !!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-                print("Results of sensitivity analysis do not apply for dependent inputs.")
-                print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n\n")
-        if exitflag == 1:
-            print(" First order indices:")
-            print(' ', S_F1, '\n')
-            print(" Total-effect indices:")
-            print(' ', S_F1_T, '\n\n')
-        else:
-            print('Sensitivity analysis could not be performed, because:')
-            print(errormsg)
 
-
-    return u_star, x_star, beta, Pf, S_F1, S_F1_T
+    return u_star, x_star, beta,alpha, Pf

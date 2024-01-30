@@ -1,7 +1,6 @@
 import scipy as sp
 from ERANataf import ERANataf
 from ERADist import ERADist
-from FORM_Sobol_indices import FORM_Sobol_indices
 
 try:
     import autograd.numpy as np
@@ -19,6 +18,7 @@ Felipe Uribe
 Luca Sardi
 Daniel Koutas
 Max Ehre
+Ivan Olarte Rodriguez
 Engineering Risk Analysis Group
 Technische Universitat Munchen
 www.era.bgu.tum.de
@@ -29,6 +29,8 @@ Changelog
 2022-04: * included first order and total-effect Sobol' indices computation
 2023-05: * added optional inputs to control design point search parameters
          * include autograd and finite difference methods for LSF gradient
+2023-09: * Modified the inclusion of Sobol Indices by having the FORM alpha
+           indices as direct output of the function
 ---------------------------------------------------------------------------
 Comment:
 * The FORM method uses a first order approximation of the LSF and is
@@ -40,9 +42,6 @@ Input:
                           gradient of the limit state function (optional)
                           - if not provided, finite differences are used
 * distr                 : ERANataf-Object containing the distribution
-* sensitivity_analysis  : implementation of sensitivity analysis: 
-                          1 - perform, 
-                          0 - not perform
 
 Optional (optimization parameters for design point search):
 
@@ -54,9 +53,10 @@ Output:
 * u_star : design point in the standard space
 * x_star : design point in the original space
 * beta   : reliability index
+* alpha  : FORM sensitivity indices
 * Pf     : probability of failure
-* S_F1   : vector of first-order indices
-* S_F1_T : vector of total-effect indices
+
+
 ---------------------------------------------------------------------------
 References:
 1. "Structural reliability under combined random load sequences."
@@ -65,7 +65,8 @@ References:
 ---------------------------------------------------------------------------
 """
 
-def FORM_HLRF(g,dg,distr,sensitivity_analysis, u0 = 1, tol = 1e-6, maxit = 500):
+def FORM_HLRF(g,dg,distr:ERANataf, u0:float = 0.1, 
+              tol:float = 1e-6, maxit:int = 500):
 
     #  initial check if there exists a Nataf object
     if not(isinstance(distr, ERANataf)):
@@ -83,11 +84,12 @@ def FORM_HLRF(g,dg,distr,sensitivity_analysis, u0 = 1, tol = 1e-6, maxit = 500):
             # check if autograd works       
             dg = grad(g)
             test_dg = dg(distr.U2X(np.random.randn(1,d)))
+            del test_dg
         except:
             # use finite differences if autograd fails
             fd_grad = True
-            eps     = lambda gg: 0.0001 * max(np.abs(gg),0.000001)
-            dg      = lambda xg: (g(xg[0] + np.diag(eps(xg[1])*np.ones(d))) - xg[1]) / eps(xg[1])
+            epsil     = lambda gg: 1e-04 * np.maximum(np.abs(gg),1e-06)
+            dg      = lambda xg,ggg: (g( np.add( xg, np.diag(epsil(ggg)*np.ones(d)) ) ) - ggg) / epsil(ggg)
 
     #  initialization
     u     = u0*np.ones([maxit+2,d])
@@ -104,13 +106,18 @@ def FORM_HLRF(g,dg,distr,sensitivity_analysis, u0 = 1, tol = 1e-6, maxit = 500):
         # 2. evaluate LSF gradient at point u_k and direction cosines
 
         if fd_grad:
-            DH_uk      = J @ dg([xk,H_uk])
+            DH_uk      = np.dot( J, dg(xk,H_uk) )
         else:
-            DH_uk      = J @ dg(xk)
+            DH_uk      = np.dot( J , dg(xk) ) 
     
-        norm_DH_uk = np.linalg.norm(DH_uk)
+        norm_DH_uk = np.linalg.norm(DH_uk,2)
+
+        if np.isnan(norm_DH_uk):
+            raise RuntimeError("The Jacobian is a nan value. Check the inputs!")
+        
+
         alpha      = DH_uk/norm_DH_uk
-        alpha      = alpha.squeeze()
+        alpha      = alpha.ravel()
 
         # 3. calculate beta
         beta[k] = - u[k,:] @ alpha + H_uk/norm_DH_uk
@@ -131,18 +138,6 @@ def FORM_HLRF(g,dg,distr,sensitivity_analysis, u0 = 1, tol = 1e-6, maxit = 500):
     beta   = beta[k]
     Pf     = sp.stats.norm.cdf(-beta)
 
-    #  sensitivity analysis
-    if sensitivity_analysis == 1:
-        if hasattr(distr, 'Marginals'):
-            if not (distr.Rho_X == np.eye(len(distr.Marginals))).all():
-                print("\n\n!!!!!!!!!!!!!!!!!!!!!!!!!!!! WARNING: !!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-                print("Results of sensitivity analysis do not apply for dependent inputs.")
-                print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n\n")
-        [S_F1, S_F1_T, exitflag, errormsg] = FORM_Sobol_indices(alpha, beta, Pf)
-    else:
-        S_F1 = []
-        S_F1_T = []
-
     # print results
     print('\n*FORM with HLRF algorithm\n')
     print(' ', k+1, ' iterations... Reliability index = ', beta, ' --- Failure probability = ', Pf, '\n')
@@ -151,15 +146,5 @@ def FORM_HLRF(g,dg,distr,sensitivity_analysis, u0 = 1, tol = 1e-6, maxit = 500):
         print('Warning! HLRF may have converged to wrong value! The LSF of the design point is: ', g(x_star))
     print('\n')
 
-    # print first order and total-effect indices
-    if sensitivity_analysis == 1:
-        if exitflag == 1:
-            print(" First order indices:")
-            print(' ', S_F1, '\n')
-            print(" Total-effect indices:")
-            print(' ', S_F1_T, '\n\n')
-        else:
-            print('Sensitivity analysis could not be performed, because:')
-            print(errormsg)
 
-    return u_star, x_star, beta, Pf, S_F1, S_F1_T
+    return u_star, x_star, beta, alpha, Pf 
