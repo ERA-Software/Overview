@@ -1,4 +1,4 @@
-function [u_star,x_star,beta,Pf,S_F1,S_F1_T] = FORM_HLRF(g, dg, distr, sensitivity_analysis, u0, tol, maxit)
+function [u_star,x_star,beta,alpha,Pf] = FORM_HLRF(g, dg, distr, u0, tol, maxit)
 %% HLRF function
 %{
 ---------------------------------------------------------------------------
@@ -14,7 +14,6 @@ www.bgu.tum.de/era
 First version: 2018-05
 ---------------------------------------------------------------------------
 Changelog 
-2022-04: * included first order and total-effect Sobol' indices computation
 2023-05: * added optional inputs to control design point search parameters
          * include autograd and finite difference methods for LSF gradient
 ---------------------------------------------------------------------------
@@ -42,6 +41,7 @@ Output:
 * u_star : design point in the standard space
 * x_star : design point in the original space
 * beta   : reliability index
+* alpha  : vector with the values of FORM indices
 * Pf     : probability of failure
 * S_F1   : vector of first-order indices
 * S_F1_T : vector of total-effect indices
@@ -54,23 +54,26 @@ References:
 %}
 
 %% initial check if there exists a Nataf object
-if ~(any(strcmp('Marginals',fieldnames(distr))) == 1)   % use Nataf transform (dependence)
+if ~(any(strcmp('Marginals',fieldnames(distr))))   % use Nataf transform (dependence)
 	return;
 end
 d = length(distr.Marginals);    % number of random variables (dimension)
 
 %% set optional inputs if not passed
-if ~exist('u0', 'var') | isempty(u0)
+if ~exist('u0', 'var') || isempty(u0)
     u0  = repmat(0.1,d,1);   % default starting point point
 end
 
-if ~exist('tol', 'var') | isempty(tol)
+if ~exist('tol', 'var') || isempty(tol)
     tol = 1e-6; % default tolerance
 end
 
-if ~exist('maxit', 'var') | isempty(maxit)
+if ~exist('maxit', 'var') || isempty(maxit)
     maxit = 5e2; % default max. number of iterations
 end
+
+%% Get the length
+d = length(distr.Marginals);    % number of random variables (dimension)
 
 %% determine how to evaluate LSF gradients
 fd_grad = 0;
@@ -82,6 +85,7 @@ if isempty(dg)
     % test if autograd works on given LSF
     try
         test_dg = dg(distr.U2X(randn(d,1)));
+        clear test_dg;
     catch err_msg
         % use finite differences if autograd fails
         fd_grad = 1;
@@ -113,7 +117,7 @@ while true
        DH_uk      = J * dg(xk);
    end
 
-   norm_DH_uk = norm(DH_uk);
+   norm_DH_uk = norm(DH_uk,2);
    alpha      = DH_uk/norm_DH_uk;
    
    % 3. calculate beta
@@ -123,7 +127,7 @@ while true
    u(:,k+1) = -beta(k)*alpha;
    
    % next iteration
-   if (norm(u(:,k+1)-u(:,k)) <= tol)  || (k == maxit)
+   if (norm(u(:,k+1)-u(:,k),2) <= tol)  || (k == maxit)
       break;
    else
       k = k+1;
@@ -139,13 +143,6 @@ x_star = distr.U2X(u_star);
 beta   = beta(k);
 Pf     = normcdf(-beta,0,1);
 
-%% sensitivity analysis
-if sensitivity_analysis == 1
-    [S_F1, S_F1_T, exitflag, errormsg] = FORM_Sobol_indices(alpha, beta, Pf);
-else
-    S_F1 = [];
-    S_F1_T = [];
-end
 
 %% print results
 fprintf('*FORM Method\n');
@@ -156,26 +153,5 @@ if ~(abs(g(x_star)) <= 1e-6)
 end
 fprintf('\n')
 
-
-% print first-order and total-effect indices
-if sensitivity_analysis == 1
-    if any(strcmp('Marginals',fieldnames(distr)))
-        if ~isequal(distr.Rho_X, eye(length(distr.Marginals)))
-            fprintf("\n\n!!!!!!!!!!!!!!!!!!!!!!!!!!!! WARNING: !!!!!!!!!!!!!!!!!!!!!!!!!!!!\n")
-            fprintf("Results of sensitivity analysis do not apply for dependent inputs.")
-            fprintf("\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n\n")
-        end
-    end
-    
-    if exitflag == 1
-        fprintf(" First order indices: \n");
-        disp(S_F1);
-        fprintf(" Total-effect indices: \n");
-        disp(S_F1_T);
-    else
-        fprintf('Sensitivity analysis could not be performed, because: \n')
-        fprintf(errormsg);
-    end
-end
 
 return;

@@ -3,6 +3,10 @@
 ---------------------------------------------------------------------------
 Created by:
 Daniel Koutas
+
+Additional Developers:
+Ivan Olarte-Rodriguez
+
 Engineering Risk Analysis Group   
 Technische Universitat Munchen
 www.bgu.tum.de/era
@@ -50,17 +54,33 @@ g  = @(x) 1 - ((x(:,1)+x(:,2))/(x(:,4)*A_s) + ...
          (x(:,1)+x(:,2))*x(:,3)/(x(:,4)*W_s) * ...
           pi^2*x(:,5)*I_s/L^2 / (pi^2*x(:,5)*I_s/L^2-(x(:,1)+x(:,2))));
 
-%% Implementation of sensitivity analysis: 1 - perform, 0 - not perform
-sensitivity_analysis = 1;
 
 %% Solve the optimization problem of the First Order Reliability Method
 % OPC 1. FORM using Hasofer-Lind-Rackwitz-Fiessler algorithm HLRF (Ref.1 Pag.128)
-[u_star_hlrf, x_star_hlrf, beta_hlrf, Pf_hlrf, S_F1_hlrf, S_F1_T_hlrf] = FORM_HLRF(g, [], pi_pdf, sensitivity_analysis);
+[u_star_hlrf, x_star_hlrf, beta_hlrf, alpha_hlrf, Pf_hlrf] = FORM_HLRF(g, [], pi_pdf);
 
 % OPC 2. FORM using MATLAB fmincon (without analytical gradient)
-[u_star_fmc, x_star_fmc, beta_fmc, Pf_fmc, S_F1_fmc, S_F1_T_fmc] = FORM_fmincon(g, [], pi_pdf, sensitivity_analysis);
+[u_star_fmc, x_star_fmc, beta_fmc, alpha_fmc, Pf_fmc] = FORM_fmincon(g, [], pi_pdf);
 
-% MC solution given in paper
+%% Implementation of sensitivity analysis
+
+% Computation of Sobol Indices
+compute_Sobol = true;
+
+% Computation of EVPPI (based on standard cost of failure (10^8) and cost
+% of replacement (10^5)
+compute_EVPPI = false;
+
+% using Hasofer-Lind-Rackwitz-Fiessler algorithm HLRF (Ref.1 Pag.128)
+[S_F1_hlrf, S_F1_T_hlrf, ~] = FORM_Sensitivity(Pf_hlrf, pi_pdf, beta_hlrf, alpha_hlrf, ...
+                                               compute_Sobol, compute_EVPPI);
+
+% using MATLAB fmincon
+[S_F1_fmc, S_F1_T_fmc, ~] = FORM_Sensitivity(Pf_fmc, pi_pdf, beta_fmc, alpha_fmc, ...
+                                             compute_Sobol, compute_EVPPI);
+
+
+%% MC solution given in paper
 % The MC results for S_F1_MC have the following COVs in the given order:
 % [16.1%, 0.2%, 1.8%, 7.4%, 15.1%]
 % Hence the first order indices (except for the second one) have quite high
@@ -75,12 +95,12 @@ S_F1_T_ref = [0.2365, 0.9896, 0.7354, 0.3595, 0.2145];
 Pf_ref = 8.35e-4;
 
 % Print reference values for the first order indices
-fprintf("***Reference first order Sobol' indices: ***\n");
+fprintf("\n\n***Reference first order Sobol' indices: ***\n");
 disp(S_F1_ref);
 fprintf("***Reference total-effect indices: ***\n");
 disp(S_F1_T_ref);
 
 % show p_f results
-fprintf('\n***Exact Pf: %g ***\n', Pf_ref);
+fprintf('***Exact Pf: %g ***\n', Pf_ref);
 fprintf('***FORM HLRF Pf: %g ***\n', Pf_hlrf);
 fprintf('***FORM fmincon Pf: %g ***\n\n', Pf_fmc);
