@@ -34,6 +34,7 @@ Rackwitz, R., and B. Fiessler (1979): Structural reliability under combined rand
 
 Papaioannou I., Straub D. (2021): Variance-based reliability sensitivity analysis and the FORM α-factors. Reliability Engineering and System Safety 210: 107496.
 
+Straub, D., Ehre, M., & Papaioannou, I. (2022). Decision-theoretic reliability sensitivity. Reliability Engineering & System Safety, 221, 108215.
 
 ## Version
 

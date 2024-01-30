@@ -14,7 +14,12 @@ www.bgu.tum.de/era
 First version: 2023-06
 ---------------------------------------------------------------------------
 Changelog 
-
+---------------------------------------------------------------------------
+Based on:
+1."Decision-theoretic reliability sensitivity"
+   Daniel Straub, Max Ehre, & Iason Papaioannou.
+   Luyi Li, Iason Papaioannou & Daniel Straub.
+   Reliability Engineering & System Safety (2022), 221, 108215.
 ---------------------------------------------------------------------------
 Comment:
 * The EVVPI computation uses the FORM indices as input. 

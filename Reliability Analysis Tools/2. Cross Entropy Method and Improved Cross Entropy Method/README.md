@@ -43,6 +43,7 @@ Papaioannou, Geyer S., Straub D. (2019): Improved cross entropy-based importance
 
 Li L., Papaioannou I., Straub D. (2019): Global reliability sensitivity estimation based on failure samples. Structural Safety 81: 101871.
 
+Straub, D., Ehre, M., & Papaioannou, I. (2022). Decision-theoretic reliability sensitivity. Reliability Engineering & System Safety, 221, 108215.
 
 ## Version
 
