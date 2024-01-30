@@ -7,12 +7,18 @@ function [EVPPI, exitflag, errormsg] = Sim_EVPPI(f_s, pf, c_R, c_F, X_marg, norm
     Engineering Risk Analysis Group   
     Technische Universitat Munchen
     www.bgu.tum.de/era
-    ---------------------------------------------------------------------------
+    -----------------------------------------------------------------------
     First version: 2023-06
-    ---------------------------------------------------------------------------
-    Changelog 
-    
-    ---------------------------------------------------------------------------
+    -----------------------------------------------------------------------
+    Based on:
+    1."Decision-theoretic reliability sensitivity"
+       Daniel Straub, Max Ehre, & Iason Papaioannou.
+       Luyi Li, Iason Papaioannou & Daniel Straub.
+       Reliability Engineering & System Safety (2022), 221, 108215.
+    -----------------------------------------------------------------------
+    Comments:
+    * for MLCV calculation: see Sim_Sobol_indices code
+    -----------------------------------------------------------------------
 
     Inputs:
     - f_s:              failure sample containing n points (d x n matrix)
@@ -177,15 +183,13 @@ function [EVPPI, exitflag, errormsg] = Sim_EVPPI(f_s, pf, c_R, c_F, X_marg, norm
     % EVPPI: expected value of partial perfect information of each of the d
     % input variables of a system regarding a binary repair (repair/do nothing)
     % decision defined by the inputs
-    
-    
+        
     nx = p.Results.integration_points;
 
-    
     % discretize input r.v.:
     for i=1:d
-        xmin = p.Results.X_marg(i).mean - 8* p.Results.X_marg(i).std;
-        xmax = p.Results.X_marg(i).mean + 8* p.Results.X_marg(i).std;
+        xmin = p.Results.X_marg(i).mean - 15* p.Results.X_marg(i).std;
+        xmax = p.Results.X_marg(i).mean + 15* p.Results.X_marg(i).std;
         dxi  = (xmax - xmin)/nx;
         xi   = xmin+dxi/2:dxi:xmax-dxi/2;
     
@@ -199,9 +203,7 @@ function [EVPPI, exitflag, errormsg] = Sim_EVPPI(f_s, pf, c_R, c_F, X_marg, norm
             KDE{i} = @(x) (min(kde(f_s(:,i), x, w_opt(i))));
         end
         
-         
-    
-        % compute conditional probability of failure, CVPPI and EVPPI:
+        %% compute conditional probability of failure, CVPPI and EVPPI:
         
         % conditional probability of failure
         % Set the storage size with empty array first
@@ -209,12 +211,8 @@ function [EVPPI, exitflag, errormsg] = Sim_EVPPI(f_s, pf, c_R, c_F, X_marg, norm
         for jj = 1:numel(xi)
              PF_xi(jj) =  KDE{i}(xi(jj))./X_marg(i).pdf(xi(jj))*pf;
         end
-           
-        
-        % Slice the values when Inf to 
 
         % compute CVPPI
-
         if pf>PF_thres
             CVPPI_xi = heaviside(PF_thres-PF_xi).*(c_R-c_F*PF_xi);
         else
@@ -225,6 +223,7 @@ function [EVPPI, exitflag, errormsg] = Sim_EVPPI(f_s, pf, c_R, c_F, X_marg, norm
         CVPPI_xi(isnan(CVPPI_xi)) = 0;
         CVPPI_xi(isinf(CVPPI_xi)) = 0;
        
+        % compute EVPPI
         crude_EVPPI(i) = sum(CVPPI_xi.*X_marg(i).pdf(xi),2)*dxi;
     end
 
@@ -249,9 +248,6 @@ function [EVPPI, exitflag, errormsg] = Sim_EVPPI(f_s, pf, c_R, c_F, X_marg, norm
         otherwise
             error("The output type was not properly set!");
     end
-
-    
-
 
 end
 
