@@ -143,6 +143,13 @@ pf_ref = 2.2e-3
 print("\n***Reference Pf: ", pf_ref, " ***")
 print("***CE-based IS Pf: ", Pf_CE, " ***\n")
 
+# %% Plots
+# Options for font-family and font-size
+plt.rc('font', size=12)
+plt.rc('axes', titlesize=20)    # fontsize of the axes title
+plt.rc('axes', labelsize=18)    # fontsize of the x and y labels
+plt.rc('figure', titlesize=20)  # fontsize of the figure title
+
 # Plot samples
 if samplesU:
     if d == 2:
