@@ -31,8 +31,8 @@ References:
 # Source: https://www.bgu.tum.de/era/software/eradist/
 # addpath('../../../ERA_Dist/ERADistNataf_MATLAB/')
 
-from Distributions.ERADist import ERADist
-from Distributions.ERANataf import ERANataf
+from ERADist import ERADist
+from ERANataf import ERANataf
 from SMC_aCS import SMC_aCS
 from SMC_GM import SMC_GM
 
@@ -80,10 +80,15 @@ burn = int(2)           # Burn-in length (per chain)
 tarCoV = 1.5            # target coefficient of variation of the weights
 k_init = int(2)
 
-print('\nSequential Monte Carlo with aCS: \n\n')
-[samplesU, samplesX, q, logcE] = SMC_aCS(N, p, log_likelihood, prior_pdf, burn, tarCoV)
-#print('\nSequential Monte Carlo with GM: \n\n')
-#[samplesU, samplesX, q, k_fin, logcE] = SMC_GM(N, p, log_likelihood, prior_pdf, k_init, burn, tarCoV)
+#method = "aCS"
+method = "GM"
+
+if method == "aCS":
+    print('\nSequential Monte Carlo with aCS: \n\n')
+    [samplesU, samplesX, q, logcE] = SMC_aCS(N, p, log_likelihood, prior_pdf, burn, tarCoV)
+elif method == "GM":
+    print('\nSequential Monte Carlo with GM: \n\n')
+    [samplesU, samplesX, q, k_fin, logcE] = SMC_GM(N, p, log_likelihood, prior_pdf, k_init, burn, tarCoV)
 
 ## extract the samples
 nsub = len(q)

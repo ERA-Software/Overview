@@ -3,8 +3,8 @@ import math
 import scipy as sp
 from scipy import stats, optimize
 
-from Distributions.ERADist import ERADist
-from Distributions.ERANataf import ERANataf
+from ERADist import ERADist
+from ERANataf import ERANataf
 """
 ---------------------------------------------------------------------------
 Created by:

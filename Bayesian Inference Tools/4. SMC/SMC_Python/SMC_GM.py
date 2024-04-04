@@ -5,8 +5,8 @@ from scipy import stats, optimize
 
 import matplotlib.pyplot as plt
 
-from Distributions.ERADist import ERADist
-from Distributions.ERANataf import ERANataf
+from ERADist import ERADist
+from ERANataf import ERANataf
 from EMGM import EMGM
 
 ## Sequential Monte Carlo using adaptive conditional sampling (pCN)
