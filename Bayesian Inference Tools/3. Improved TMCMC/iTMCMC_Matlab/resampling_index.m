@@ -7,7 +7,6 @@ Felipe Uribe
 Engineering Risk Analysis Group   
 Technische Universitat Munchen
 www.bgu.tum.de/era
-Contact: Antonios Kamariotis (antonis.kamariotis@tum.de)
 ---------------------------------------------------------------------------
 Version 2017-04
 ---------------------------------------------------------------------------

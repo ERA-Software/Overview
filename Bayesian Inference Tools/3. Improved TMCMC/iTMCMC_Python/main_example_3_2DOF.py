@@ -11,7 +11,6 @@ Luca Sardi
 Engineering Risk Analysis Group
 Technische Universitat Munchen
 www.bgu.tum.de/era
-Contact: Antonios Kamariotis (antonis.kamariotis@tum.de)
 ---------------------------------------------------------------------------
 Last Version 2021-03
 * Adaptation to new ERANataf class
