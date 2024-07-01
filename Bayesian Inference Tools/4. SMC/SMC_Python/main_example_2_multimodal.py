@@ -9,11 +9,9 @@ from scipy import stats
 ---------------------------------------------------------------------------
 Created by:
 Fong-Lin Wu
-Daniel Koutas
 Engineering Risk Analysis Group
 Technische Universitat Munchen
 www.era.bgu.tum.de
-Contact: Antonis Kamariotis (antonis.kamariotis@tum.de)
 ---------------------------------------------------------------------------
 Version 2021-04
 ---------------------------------------------------------------------------
@@ -29,7 +27,6 @@ References:
 
 # add path to ERADist and ERANataf classes
 # Source: https://www.bgu.tum.de/era/software/eradist/
-# addpath('../../../ERA_Dist/ERADistNataf_MATLAB/')
 
 from ERADist import ERADist
 from ERANataf import ERANataf
