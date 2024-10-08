@@ -22,11 +22,15 @@ MATLAB and Python 3 software tool for Bayesian inference with the adaptive versi
 ## 3. Improved TMCMC
 
 <img src="./images/itmcmc_pic.webp" align="right" height="190">
-A set of tools for reliability analysis and estimation of rare event probabilities. Includes:
+MATLAB and Python 3 software tool for Bayesian inference with the improved TMCMC method.
 </br></br> </br></br> </br></br> 
 
 
 ## 4. SMC
 
 MATLAB and Python 3 software tool for Bayesian inference with the sequential Monte Carlo (SMC) method.
+
+## 5. CEBU
+
+MATLAB and Python 3 software tool for Bayesian inference with the Cross-entropy Bayesian Update (CEBU) method.
 
