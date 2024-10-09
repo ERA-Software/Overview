@@ -184,12 +184,12 @@ def CEBU_GM(N:int, log_likelihood, distr:ERANataf, max_it:int, CV_target:float,
         if beta_hat>=1:
             break
     
-    # %% Adjust storing variables
+    # Adjust storing variables
     beta_tot = beta_tot[:j+2]
     cv_tot = cv_tot[:j+1]
 
     # Calculation of the Probability of failure
-    #Compute weights
+    # Compute weights
     W = np.exp(logW)
 
     #Produce new failure samples after end step

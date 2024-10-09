@@ -105,7 +105,8 @@ def log_likelihood(theta):
     return llvec
 
 #=================================================================
-N = int(3e3)
+# CEBU step
+N = int(1e3)
 Nlast = N
 max_steps = 100
 tarCoV = 1.5
@@ -120,6 +121,7 @@ if method == "GM":
 elif method == "vMFNM":
     samplesU, samplesX, v_tot, beta_tot, k_final, evidence, Wlast_normed, f_s_iid = CEBU_vMFNM(N, log_likelihood, prior_pdf, max_steps, tarCoV, k_init, 2, Nlast)
 
+#=================================================================
 ## extract the samples
 nsub = len(samplesU) 
 if nsub == 0: 
@@ -140,7 +142,7 @@ for i in range(nsub):
     x2p.append(samplesX[i][:,1])
 
 #=================================================================
-# reference solutions
+# reference and CEBU solutions
 mu_exact    = 1.12   # for x_1
 sigma_exact = 0.66   # for x_1
 cE_exact    = 1.52e-3

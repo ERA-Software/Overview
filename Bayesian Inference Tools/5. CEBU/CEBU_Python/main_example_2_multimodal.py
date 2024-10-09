@@ -64,7 +64,7 @@ w     = 0.1*np.ones((M,1))
 
 
 def likelihood(theta):
-    array = np.zeros((M,2))
+    array = np.zeros((M,1))
     for k in range(len(mu)):
         array[k,:] = stats.multivariate_normal.pdf(theta, mu[k,:], Cov)
     return np.sum(np.multiply(w, array))
@@ -75,7 +75,9 @@ def log_likelihood(theta):
         llvec[k] = np.log(likelihood(theta[k,:]) + np.finfo(float).tiny)
     return llvec
 
-N = int(3e3)
+#=================================================================
+# CEBU step
+N = int(1e3)
 Nlast = N
 max_steps = 100
 tarCoV = 1.5
@@ -88,6 +90,7 @@ if method == "GM":
 elif method == "vMFNM":
     samplesU, samplesX, v_tot, beta_tot, k_final, evidence, Wlast_normed, f_s_iid = CEBU_vMFNM(N, log_likelihood, prior_pdf, max_steps, tarCoV, k_init, 2, Nlast)
 
+#=================================================================
 ## extract the samples
 nsub = len(samplesU)
 if nsub == 0: 
@@ -107,13 +110,15 @@ for i in range(nsub):
     x1p.append(samplesX[i][:,0])
     x2p.append(samplesX[i][:,1])
 
-# show results
+#=================================================================
+# reference and CEBU solutions
 print(f'\nModel evidence CEBU = {evidence:.5f}')
 print(f'\nMean value of x_1 = {np.mean(x1p[-1]):.5f}')
 print(f'\tStd of x_1 = {np.std(x1p[-1]):.5f}')
 print(f'\nMean value of x_2 = {np.mean(x2p[-1]):.5f}')
 print(f'\tStd of x_2 = {np.std(x2p[-1]):.5f}\n')
 
+#=================================================================
 ## plot samples
 nrows = int(np.ceil(np.sqrt(nsub)))
 ncols = int(np.ceil(nsub/nrows))

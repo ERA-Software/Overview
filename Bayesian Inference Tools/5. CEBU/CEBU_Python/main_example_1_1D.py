@@ -69,12 +69,12 @@ def log_likelihood(theta):
 
 
 #=================================================================
-# CEBU-SuS step
-N = int(3e3)
+# CEBU step
+N = int(1e3)
 Nlast = N
 max_steps = 100
 tarCoV = 1.5
-k_init = 12
+k_init = 2
 
 method = "GM"
 
@@ -100,7 +100,7 @@ for i in range(nsub):
    x1p.append(samplesX[i][:,0])
 
 #=================================================================
-# reference and BUS solutions
+# reference and CEBU solutions
 mu_exact    = 4.81     
 sigma_exact = 0.196
 cE_exact    = 2.36e-6
