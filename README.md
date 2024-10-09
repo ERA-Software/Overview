@@ -12,21 +12,21 @@ If you encounter any issues or bugs in the code, feel free to reach out to us un
 This page here will be populated with all folders, so you can download all files at once. In the future, this page will also serve as the main directory, which provides the links to the respective submodules, where the individual codes can be retrieved.
 
 
-## ERADist
+## [ERADist](./ERADist/)
 
 MATLAB and Python 3 classes for the convenient definition and use of probability distributions. It allows defining the joint distribution through the marginal distributions and correlation coefficients. The Nataf transformation (Gaussian copula) is then used to construct the joint distribution.
 
 The distributions can be defined through their parameters, through their moments or through data fitting.
 
 
-## Surrogate Modelling
+## [Surrogate Modelling](./Surrogate%20Modelling/)
 
 Tools for uncertainty quantification with surrogate models. Includes:
 
 - Partial-Least-Square-Based Polynomial Chaos Expansion (PLS-PCE)
 
 
-## Reliability Analysis Tools
+## [Reliability Analysis Tools](./Reliability%20Analysis%20Tools/)
 
 <img src="./Reliability Analysis Tools/images/SuS_pic.webp" align="right" height="150">
 A set of tools for reliability analysis and estimation of rare event probabilities. Includes:
@@ -38,7 +38,7 @@ A set of tools for reliability analysis and estimation of rare event probabiliti
 - Combination Line Sampling
 
 
-## Bayesian Inference Tools
+## [Bayesian Inference Tools](./Bayesian%20Inference%20Tools/)
 
 <img src="./Bayesian Inference Tools/images/adaptive_bus_pic.webp" align="right" height="190">
 A set of tools for sampling-based Bayesian inference. Includes: 
@@ -50,7 +50,7 @@ A set of tools for sampling-based Bayesian inference. Includes:
 </br></br> </br>
 
 
-## Bayesian network discretization of reliability problems
+## [Bayesian network discretization of reliability problems](./BN%20discretization/)
 
 <img src="./BN discretization/images/BN_pic.png" align="right" height="180">
 A MATLAB based software prototype performing efficient static discretization </br>
@@ -59,7 +59,7 @@ discrete Bayesian network framework.
 </br></br></br></br>
 
 
-## Risk Analysis Tool (RAT)
+## [Risk Analysis Tool (RAT)](./Risk%20Analysis%20Tool%20(RAT)/)
 
 <img src="./Risk Analysis Tool (RAT)/images/rat_overview_pic.webp" align="right" height="250">
 “RAT” is an Excel based tool for scenario-based risk assessment and for Cost Benefit Analysis (CBA) of alternative risk mitigation strategies. It consists of three modules: (1) Risk estimation, (2) Cost estimation and (3) Evaluation of strategies using CBA. It is applicable for problems related to natural hazards such as floods as well as other types of hazards for which the risk is assessed through scenarios representing varying magnitudes of the hazard. Results are presented in tables and figures that can directly be used in reports and presentations. A comprehensive documentation of the methodology utilised in RAT and illustrative examples are also provided. 
