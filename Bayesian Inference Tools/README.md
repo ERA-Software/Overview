@@ -28,8 +28,10 @@ MATLAB and Python 3 software tool for Bayesian inference with the improved TMCMC
 
 ## 4. SMC
 
+<img src="./images/smc_pic.png" align="right" height="190">
 MATLAB and Python 3 software tool for Bayesian inference with the sequential Monte Carlo (SMC) method.
-</br> 
+</br></br> </br></br> </br></br> 
+
 
 ## 5. CEBU
 
