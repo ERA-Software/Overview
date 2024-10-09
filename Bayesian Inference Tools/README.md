@@ -5,7 +5,7 @@ This page collects software tools for sampling-based Bayesian inference.
 We provide 3 benchmark problems which is described in the [examples file](./Bayesian_inference_examples.pdf).
 
 
-## 1. BUS
+## [1. BUS](./1.%20BUS/)
 
 <img src="./images/bus_pic.webp" align="right" height="190">
 MATLAB and Python 3 software tools for Bayesian inference with BUS (Bayesian Updating with Structural reliability methods) combined with Subset Simulation.
