@@ -1,4 +1,4 @@
-# Surrogate Modelling
+# Fesslix
 
 Fesslix is a Free software program to perform stochastic analysis (e.g. reliability analysis and Bayesian updating). The source code is written in C++ and is available free of charge under the Free Software GPL license. Fesslix comes with a powerful and flexible input language that allows coupling of almost any model (external application) to Fesslix.
 
