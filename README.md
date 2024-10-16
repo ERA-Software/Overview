@@ -55,8 +55,8 @@ A set of tools for sampling-based Bayesian inference. Includes:
 <img src="./BN discretization/images/BN_pic.png" align="right" height="180">
 A MATLAB based software prototype performing efficient static discretization </br>
 for structural reliability problems, such that they can be updated in a </br>
-discrete Bayesian network framework.
-</br></br></br></br>
+    discrete Bayesian network framework.
+    </br></br></br></br>
 
 
 ## [Risk Analysis Tool (RAT)](./Risk%20Analysis%20Tool%20(RAT)/)
@@ -65,7 +65,7 @@ discrete Bayesian network framework.
 “RAT” is an Excel based tool for scenario-based risk assessment and for Cost Benefit Analysis (CBA) of alternative risk mitigation strategies. It consists of three modules: (1) Risk estimation, (2) Cost estimation and (3) Evaluation of strategies using CBA. It is applicable for problems related to natural hazards such as floods as well as other types of hazards for which the risk is assessed through scenarios representing varying magnitudes of the hazard. Results are presented in tables and figures that can directly be used in reports and presentations. A comprehensive documentation of the methodology utilised in RAT and illustrative examples are also provided. 
 
 
-## Fesslix
+## [Fesslix](./Fesslix/)
 
 Fesslix is an application to perform stochastic analysis (e.g. reliability analysis and Bayesian updating). The source code is written in C++ and is available free of charge. Fesslix comes with a powerful and flexible input language that allows coupling of almost any model (external application) to Fesslix.
 </br> </br>  
