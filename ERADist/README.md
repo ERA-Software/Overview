@@ -9,6 +9,12 @@ To model joint distributions, the user needs to define the marginal distribution
 Member functions of the Nataf class include standard functions such as pdf, cdf, random, but also functions that transform samples from the X-space to the U-space and vice versa. The latter is a common operation in reliability analysis.
 
 
+## Update Notification
+
+If you want to be informed about updates of the ERADist toolbox you can enter your email in the mailing list by following the instructions under this link: [https://lists.lrz.de/mailman/listinfo/eradist](https://lists.lrz.de/mailman/listinfo/eradist) 
+In order to unsubcribe from the mailing list follow the same link.
+
+
 ## Requirements
 
 MATLAB, incl. Statistical toolbox, ERADist and ERANataf probability distribution classes (optional: Deep Learning Toolbox)
