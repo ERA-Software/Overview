@@ -3,6 +3,7 @@ from ERADist import ERADist
 from ERANataf import ERANataf
 from FORM_HLRF import FORM_HLRF
 from FORM_fmincon import FORM_fmincon
+from FORM_Sensitivity import FORM_Sensitivity
 
 """
 ---------------------------------------------------------------------------
@@ -59,10 +60,27 @@ g  = lambda x:  1 - ((x[0]+x[1])/(x[3]*A_s) +
 sensitivity_analysis = 1
 
 # OPC 1. FORM using Hasofer-Lind-Rackwitz-Fiessler algorithm HLRF (Ref.1 Pag.128)
-[u_star_hlrf, x_star_hlrf, beta_hlrf, Pf_hlrf, S_F1_hlrf, S_F1_T_hlrf] = FORM_HLRF(g, [], pi_pdf,sensitivity_analysis)
+#[u_star_hlrf, x_star_hlrf, beta_hlrf, Pf_hlrf, S_F1_hlrf, S_F1_T_hlrf] = FORM_HLRF(g, [], pi_pdf,sensitivity_analysis)
+[u_star_hlrf, x_star_hlrf, beta_hlrf, alpha_hlrf, Pf_hlrf] = FORM_HLRF(g, [], pi_pdf)
 
 # OPC 2. FORM using Python scipy.optimize.minimize()
-[u_star_fmc, x_star_fmc, beta_fmc, Pf_fmc, S_F1_fmc, S_F1_T_fmc] = FORM_fmincon(g, [], pi_pdf,sensitivity_analysis)
+[u_star_fmc, x_star_fmc, beta_fmc, alpha_fmc, Pf_fmc] = FORM_fmincon(g, [], pi_pdf)
+
+# Computation of Sobol Indices
+compute_Sobol = True
+
+# Computation of EVPPI (based on standard cost of failure (10^8) and cost
+# of replacement (10^5)
+compute_EVPPI = True
+
+# using Hasofer-Lind-Rackwitz-Fiessler algorithm HLRF (Ref.1 Pag.128)
+[S_F1_hlrf, S_F1_T_hlrf, S_EVPPI] = FORM_Sensitivity(Pf_hlrf, pi_pdf, beta_hlrf, alpha_hlrf, 
+                                                     compute_Sobol, compute_EVPPI)
+
+# using MATLAB fmincon
+[S_F1_fmc, S_F1_T_fmc, S_EVPPI] = FORM_Sensitivity(Pf_fmc, pi_pdf, beta_fmc, alpha_fmc, 
+                                                   compute_Sobol, compute_EVPPI)
+
 
 # MC solution given in paper
 # The MC results for S_F1_MC have the following COVs in the given order:
