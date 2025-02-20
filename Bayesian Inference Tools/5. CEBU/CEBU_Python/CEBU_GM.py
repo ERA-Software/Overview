@@ -204,7 +204,7 @@ def CEBU_GM(N:int, log_likelihood, distr:ERANataf, max_it:int, CV_target:float,
     # Compute nESS
     nESS = np.exp(2*logsumexp(logWlast)-logsumexp(2*logWlast)-np.log(N_last))
 
-    evidence = np.exp(logsumexp(logW)-np.log(N_last)).squeeze() # Evidence
+    evidence = np.exp(logsumexp(logWlast)-np.log(N_last)).squeeze() # Evidence
 
     xlast:np.ndarray = u2x(ulast)
 
