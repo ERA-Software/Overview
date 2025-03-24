@@ -166,7 +166,7 @@ def SMC_aCS(N, p, log_likelihood, distr, burn, tarCoV):
             raise RuntimeError('Choose a or b')
 
         # compute parameter rho
-        sigmafk = min(lambda_*sigmaf, 1)
+        sigmafk = min(1, lambda_*sigmaf)
         rhok    = np.sqrt(1-sigmafk**2)
         counta  = 0
         count   = 0
@@ -220,7 +220,7 @@ def SMC_aCS(N, p, log_likelihood, distr, burn, tarCoV):
                     lambda_  = np.exp(np.log(lambda_) + gamma*(alpha_mu-0.44))
 
                     # compute parameter rho
-                    sigmafk = min(lambda_*sigmaf, 1)
+                    sigmafk = min(1, lambda_*sigmaf)
                     rhok    = np.sqrt(1 - sigmafk**2)
 
         uk = uk[0:nsamlev, :]

@@ -154,7 +154,7 @@ while q(m+1) < 1 && (m < max_it)  % adaptively choose q
    end
 
    % compute parameter rho
-   sigmafk = min(lambda*sigmaf);
+   sigmafk = min(1, lambda*sigmaf);
    rhok    = sqrt(1-sigmafk.^2);
    counta  = 0;
    count   = 0;
@@ -207,7 +207,7 @@ while q(m+1) < 1 && (m < max_it)  % adaptively choose q
             lambda   = exp(log(lambda)+gamma*(alpha_mu-0.44));
             
             % compute parameter rho
-            sigmafk = min(lambda*sigmaf);
+            sigmafk = min(1,lambda*sigmaf);
             rhok    = sqrt(1-sigmafk.^2);
          end
       end
