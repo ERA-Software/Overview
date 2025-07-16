@@ -10,7 +10,6 @@ Nataf Transformation of random variables
 Developed by:
 Sebastian Geyer
 Felipe Uribe
-Max Ehre
 Iason Papaioannou
 Daniel Straub
 
@@ -20,16 +19,11 @@ Fong-Lin Wu
 Alexander von Ramm
 Matthias Willer
 Peter Kaplan
-Ivan Pavlov
 
 Engineering Risk Analysis Group
 Technische Universitat Munchen
 www.bgu.tum.de/era
 ---------------------------------------------------------------------------
-Changelog
-
-New Version 2023-05:
-* Fix bug: return Jacobian dU/dX when calling X2U & dX/dU when calling U2X
 New Version 2021-03:
 * General update to match the current MATLAB version
 * Consistent shape of the input and output arrays (also consistent with 
@@ -58,7 +52,6 @@ models with prescribed marginals and covariances.
 Probabilistic Engineering Mechanics 1(2), 105-112
 ---------------------------------------------------------------------------
 '''
-
 #%%
 class ERANataf(object):
     """
@@ -252,8 +245,8 @@ class ERANataf(object):
         standard normal space U.
         X must be a [n,d]-shaped array (n = number of data points,
         d = dimensions).
-        The Jacobian of the transformation of the first given data
-        point is only given as an output in case that the input
+        The Jacobian of the transformation of all given data
+        points is only given as an output in case that the input
         argument Jacobian=True .
         """
         
@@ -282,10 +275,13 @@ class ERANataf(object):
         U = np.linalg.solve(self.A, Z.squeeze()).T
                 
         if Jacobian:
+            N_samples, _ = X.shape
+            Jac = np.zeros([N_samples, n_dim, n_dim])
             diag = np.zeros([n_dim, n_dim])
-            for i in range(n_dim):
-                diag[i, i] = self.Marginals[i].pdf(X[0,i])/stats.norm.pdf(Z[i,0])
-            Jac = np.linalg.solve(self.A, diag)
+            for n in range(N_samples):    
+                for i in range(n_dim):
+                    diag[i, i] = self.Marginals[i].pdf(X[n,i])/stats.norm.pdf(Z[i,n])
+                Jac[n, ...] = np.linalg.solve(self.A, diag)
             return np.squeeze(U), Jac
         else:
             return np.squeeze(U)
@@ -298,8 +294,8 @@ class ERANataf(object):
         to physical space X.
         U must be a [n,d]-shaped array (n = number of data points,
         d = dimensions).
-        The Jacobian of the transformation of the first given data
-        point is only given as an output in case that the input
+        The Jacobian of the transformation for all given data
+        points is only given as an output in case that the input
         argument Jacobian=True .
         """
         
@@ -324,10 +320,13 @@ class ERANataf(object):
             X[:, i] = self.Marginals[i].icdf(stats.norm.cdf(Z[i, :]))
 
         if Jacobian:
+            N_samples, _ = X.shape
+            Jac = np.zeros([N_samples, n_dim, n_dim])
             diag = np.zeros([n_dim, n_dim])
-            for i in range(n_dim):
-                diag[i, i] = stats.norm.pdf(Z[i,0])/self.Marginals[i].pdf(X[0,i])
-            Jac = np.dot(diag, self.A)
+            for n in range(N_samples):
+                for i in range(n_dim):
+                    diag[i, i] = stats.norm.pdf(Z[i,0])/self.Marginals[i].pdf(X[0,i])
+                Jac[n, ...] = np.dot(diag, self.A)
             return np.squeeze(X), Jac
         else:
             return np.squeeze(X)
