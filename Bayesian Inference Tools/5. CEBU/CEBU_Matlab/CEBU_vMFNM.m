@@ -247,7 +247,7 @@ Wlast_normed = exp(logWlast-logsumexp(logWlast,2));
 % Compute nESS
 nESS = exp(2*logsumexp(logWlast)-logsumexp(2*logWlast)-log(i_parser.Results.N_last));
 
-evidence = exp(logsumexp(logW)-log(i_parser.Results.N_last)); % Evidence
+evidence = exp(logsumexp(logWlast)-log(i_parser.Results.N_last)); % Evidence
  
 xlast = u2x(ulast);
 
