@@ -215,7 +215,7 @@ def CEBU_vMFNM(N:int, log_likelihood, distr:ERANataf, max_it:int, CV_target:floa
     # Compute nESS
     nESS = np.exp(2*logsumexp(logWlast)-logsumexp(2*logWlast)-np.log(N_last))
 
-    evidence = np.exp(logsumexp(logW)-np.log(N_last)).squeeze() # Evidence
+    evidence = np.exp(logsumexp(logWlast)-np.log(N_last)).squeeze() # Evidence
 
     k_fin = len(v_tot[-1]["mu_hat"])
 
