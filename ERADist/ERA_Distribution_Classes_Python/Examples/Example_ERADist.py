@@ -50,8 +50,8 @@ mean_dist = dist.mean()
 std_dist = dist.std()
 
 # generation of n random samples
-n = 10000;
-samples = dist.random(n);
+n = 10000
+samples = dist.random(n)
 
 ''' Definition of an ERADist object by the first moments
  Based on the just determined moments a new distribution object with the
