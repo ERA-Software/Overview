@@ -3,11 +3,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from EmpiricalDist import DistME
+from scipy.stats import ecdf
 
 def sample_bimodal_gaussian(n_samples=1000, mix_weights=(0.4, 0.6),
-                            means=(-2, 3), stds=(0.7, 1.2), random_seed=42):
-    np.random.seed(random_seed)
-    # choose component for each sample
+                            means=(-2, 3), stds=(0.7, 1.2)):
     comps = np.random.choice([0, 1], size=n_samples, p=mix_weights)
     data = np.where(
         comps == 0,
@@ -17,8 +16,9 @@ def sample_bimodal_gaussian(n_samples=1000, mix_weights=(0.4, 0.6),
     return data
 
 if __name__ == "__main__":
+    np.random.seed(2025)
     # 1. Generate a bimodal Gaussian mixture dataset
-    N = 2000
+    N = 100
     data = sample_bimodal_gaussian(n_samples=N,
                                    mix_weights=(0.2, 0.8),
                                    means=(-2, 3),
@@ -26,7 +26,7 @@ if __name__ == "__main__":
     weights = np.ones_like(data)  # uniform empirical weights
 
     # 2. Fit the empirical distribution
-    dist_emp = DistME(data, weights=weights, cdfMethod="pchip", pdfMethod="kde", bw_method=0.1)
+    dist_emp = DistME(data, weights=weights, pdfMethod="kde", pdfPoints=None, bw_method=0.1)
 
     # 3. Plot histogram + estimated PDF
     x_grid = np.linspace(data.min() - 1, data.max() + 1, 1000)

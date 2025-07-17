@@ -137,7 +137,7 @@ class ERADist(object):
       Truncated normal:           Obj = ERADist('truncatednormal','DATA',[[X],[a,b]])
       Uniform:                    Obj = ERADist('uniform','DATA',[X])
       Weibull:                    Obj = ERADist('weibull','DATA',[X])
-      Empirical:                  Obj = ERADist('empirical', 'DATA', [X, [weights, cdfMethod, pdfMethod, kdeKwargsDict]])
+      Empirical:                  Obj = ERADist('empirical', 'DATA', [X, [weights, pdfMethod, pdfPoints, kdeKwargsDict]])
           
     """
 #%%
@@ -864,8 +864,8 @@ class ERADist(object):
                 X = val[0]
                 self.Par = {
                     'weights': val[1],
-                    'cdfMethod': val[2],
-                    'pdfMethod': val[3],
+                    'pdfMethod': val[2],
+                    'pdfPoints': val[3]
                 }
                 self.Par.update(val[4])
                 self.Dist = DistME(data=X, **self.Par) # implemented by Michael Engel

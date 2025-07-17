@@ -41,9 +41,7 @@ References:
 '''
 
 def sample_bimodal_gaussian(n_samples=1000, mix_weights=(0.4, 0.6),
-                            means=(-2, 3), stds=(0.7, 1.2), random_seed=42):
-    np.random.seed(random_seed)
-    # choose component for each sample
+                            means=(-2, 3), stds=(0.7, 1.2)):
     comps = np.random.choice([0, 1], size=n_samples, p=mix_weights)
     data = np.where(
         comps == 0,
@@ -64,7 +62,7 @@ if __name__ == "__main__":
     weights = None
     
     ''' Definition of an ERADist object by a dataset '''
-    dist = ERADist('empirical','DATA',[data, weights, "pchip", "kde", {"bw_method":None}])
+    dist = ERADist('empirical','DATA',[data, weights, "kde", None, {"bw_method":None}])
     
     # computation of the first two moments
     mean_dist = dist.mean()
