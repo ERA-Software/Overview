@@ -325,7 +325,7 @@ class ERANataf(object):
             diag = np.zeros([n_dim, n_dim])
             for n in range(N_samples):
                 for i in range(n_dim):
-                    diag[i, i] = stats.norm.pdf(Z[i,0])/self.Marginals[i].pdf(X[0,i])
+                    diag[i, i] = stats.norm.pdf(Z[i,n])/self.Marginals[i].pdf(X[n,i])
                 Jac[n, ...] = np.dot(diag, self.A)
             return np.squeeze(X), Jac
         else:
