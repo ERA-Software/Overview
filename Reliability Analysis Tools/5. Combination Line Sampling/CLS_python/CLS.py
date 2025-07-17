@@ -38,7 +38,6 @@ Output:
 """
 
 import numpy as np
-import scipy as sp
 from scipy import stats
 from find_root import find_root
 from find_root_RS import find_root_RS

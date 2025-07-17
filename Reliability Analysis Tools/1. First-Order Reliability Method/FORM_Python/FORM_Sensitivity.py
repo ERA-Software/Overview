@@ -1,5 +1,4 @@
 import numpy as np
-import scipy as sp
 from ERANataf import ERANataf
 from ERADist import ERADist
 from FORM_Sobol_indices import FORM_Sobol_indices

@@ -32,7 +32,6 @@ Engineering Risk Analysis Group, Technische Universität München, Arcisstr. 2
 """
 
 import numpy as np
-from numpy.matlib import repmat
 
 # Make sure having these scripts under the same workspace
 from pce_poly import pce_poly   # kernel for computing coefficients of PCE

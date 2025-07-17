@@ -1,7 +1,6 @@
 import numpy as np
 import scipy as sp
 from ERANataf import ERANataf
-from ERADist import ERADist
 
 def FORM_EVPPI(alpha:np.ndarray, beta:float, pf:float, distr:ERANataf, 
                c_R:float, c_F:float, normalization:str) -> list:

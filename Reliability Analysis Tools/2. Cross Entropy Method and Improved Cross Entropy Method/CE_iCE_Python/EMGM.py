@@ -1,6 +1,4 @@
 import numpy as np
-import scipy as sp
-from scipy import cluster
 """
 ---------------------------------------------------------------------------
 Perform soft EM algorithm for fitting the Gaussian mixture model

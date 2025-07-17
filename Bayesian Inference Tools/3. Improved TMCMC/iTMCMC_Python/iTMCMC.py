@@ -54,7 +54,7 @@ def iTMCMC(Ns, Nb, log_likelihood, T_nataf):
     # initial check if there exists a Nataf object
     if isinstance(T_nataf, ERANataf):    # use Nataf transform (dependence)
         d   = len(T_nataf.Marginals)     # number of random variables
-        u2x = lambda u: T_nataf.U2X(u)   # from u to 
+        u2x = lambda u: T_nataf.U2X(u)   # from u to x
         PDF = lambda t: T_nataf.pdf(t)
 
     elif isinstance(T_nataf[0], ERADist):   # use distribution information for the transformation (independence)
