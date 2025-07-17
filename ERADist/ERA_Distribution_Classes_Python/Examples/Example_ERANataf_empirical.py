@@ -80,20 +80,27 @@ if __name__ == "__main__":
     
     # generation of n random samples to work with
     X = T_Nataf.random(5)
+    print("X", X)
     
     # computation of joint PDF
     PDF_X = T_Nataf.pdf(X)
+    print("PDF", PDF_X)
     
     # computation of joint CDF
     CDF_X = T_Nataf.cdf(X)
+    print("CDF", CDF_X)
     
     # transformation from physical space X to the standard normal space U and
     # Jacobian of the transformation of the first sample
     U, Jac_X2U = T_Nataf.X2U(X,'Jac')
+    print("U", U)
+    print("Jac_X2U", Jac_X2U)
     
     # transformation from standard normal space U to physical space X and
     # Jacobian of the transformation of the first sample
     X_backtransform, Jac_U2X = T_Nataf.U2X(U,'Jac')
+    print("X backtransformed", X_backtransform)
+    print("Jac_U2X", Jac_U2X)
     
     
     ''' Creation of samples in physical space, transformation to standard normal

@@ -69,21 +69,25 @@ if __name__ == "__main__":
     std_dist = dist.std()
     
     # generation of n random samples
-    n = 2000;
-    samples = dist.random(n);
+    n = 2000
+    samples = dist.random(n)
     
     ''' Other methods '''
     # generation of n samples x to work with
     x = dist.random(n)
+    print("x", x)
     
     # computation of the PDF for the samples x
     pdf = dist.pdf(x)
+    print("pdf", pdf)
     
     # computation of the CDF for the samples x
     cdf = dist.cdf(x)
+    print("cdf", cdf)
     
     # computation of the inverse CDF based on the CDF values (-> initial x)
     icdf = dist.icdf(cdf)
+    print("icdf", icdf)
     
     
     ''' Plot of the PDF and CDF '''
@@ -106,3 +110,5 @@ if __name__ == "__main__":
     fig_cdf.set_xlim([data.min(), data.max()])
     fig_cdf.set_xlabel(r'$X$')
     fig_cdf.set_ylabel(r'$CDF$')
+    
+    plt.show()
