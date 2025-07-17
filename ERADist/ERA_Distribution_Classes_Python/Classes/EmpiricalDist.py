@@ -1,5 +1,4 @@
 #### Michael Engel ### 2025-07-16 ### EmpiricalDist.py ###
-import warnings
 import numpy as np
 import scipy.stats as sps
 from scipy.interpolate import interp1d, PchipInterpolator
@@ -14,15 +13,15 @@ class DistME():
         self,
         data,
         weights = None, # None for equal weights
-        cdfMethod = "pchip", # pchip, linear, slinear...
-        pdfMethod = "kde", # kde, linear, slinear, quadratic, cubic...
+        pdfMethod = "kde", # kde, linear, slinear, quadratic, cubic, nearest, next...
+        pdfPoints = None, # None or integer (only relevant if pdfMethod is not equal to 'KDE')
         **pdfMethodParams
     ):
         '''
         :param data: One dimensional data array.
         :param weights: Weights associated to the data array. The default is None.
-        :param cdfMethod: Desired method for the CDF creation. The default is PCHIP.
         :param pdfMethod: Desired method for the PDF creation. The default is KDE.
+        :param pdfPoints: Desired number of points for the PDF creation. The default is None (will resolve in the square root of the number of data points).
         :params pdfMethodParams: Optional scipy.stats.gaussian_kde keyword arguments for the case of KDE based PDF creation.
         '''
         
@@ -30,8 +29,8 @@ class DistME():
         self._N = len(self.cleanData)
         self.normalizedWeights = np.ones_like(self.cleanData)/self._N if weights is None else weights[~np.isnan(data)]/np.sum(weights[~np.isnan(data)])
         
-        self.cdfMethod = cdfMethod
         self.pdfMethod = pdfMethod
+        self.pdfPoints = pdfPoints if pdfPoints is not None else np.max([1,int(np.sqrt(self._N))])
         self.pdfMethodParams = pdfMethodParams
         
         # statistics
@@ -40,38 +39,19 @@ class DistME():
         self._std = np.sqrt(self._var)
         
         # cdf and inverse cdf
-        if self.cdfMethod.lower()=="pchip":
-            print("DistME: Using PCHIP for CDF!")
-            self._cdf = create_weighted_cdf_PCHIP(self.cleanData, self.normalizedWeights)
-            self._ppf = create_weighted_ppf_PCHIP(self.cleanData, self.normalizedWeights)
-            
-        elif self.cdfMethod.lower()=="linear" or self.cdfMethod.lower()=="slinear":
-            print(f"DistME: Using {self.cdfMethod.lower()} interpolation for CDF!")
-            self._cdf = create_weighted_cdf_interp1d(self.cleanData, self.normalizedWeights, kind=self.cdfMethod.lower())
-            self._ppf = create_weighted_ppf_interp1d(self.cleanData, self.normalizedWeights, kind=self.cdfMethod.lower())
-        else:
-            warnings.warn(f"DistME: Using {self.cdfMethod.lower()} interpolation for CDF! Please note that we do recommend either PCHIP or somewhat linear interpolation!")
-            self._cdf = create_weighted_cdf_interp1d(self.cleanData, self.normalizedWeights, kind=self.cdfMethod.lower())
-            self._ppf = create_weighted_ppf_interp1d(self.cleanData, self.normalizedWeights, kind=self.cdfMethod.lower())
+        self._cdf = create_weighted_cdf_interp1d(self.cleanData, self.normalizedWeights, kind="previous")
+        self._ppf = create_weighted_ppf_interp1d(self.cleanData, self.normalizedWeights, kind="next")
             
         # pdf
-        if isinstance(self.pdfMethod, str) and self.pdfMethod.lower()=="kde":
+        if self.pdfMethod.lower()=="kde":
             print("DistME: Using Gaussian KDE for PDF!")
             dataSorted, weightsSorted = sortDataWeights(self.cleanData, self.normalizedWeights)
             self._pdf = sps.gaussian_kde(dataset=dataSorted, weights=weightsSorted, **pdfMethodParams)
-            
-        elif isinstance(self.pdfMethod, str) and self.pdfMethod.lower()=="pchip":
-            if not (self.cdfMethod.lower()=="pchip"):
-                raise RuntimeError("DistME: cdfMethod has to be PCHIP as well in order to use its derivative for the PDF!")
-            else:
-                print("DistME: Using PCHIP derivative for PDF!")
-                self._pdf = self._cdf.derivative(1)
-                
         else:
             print("DistME: Using numerical derivative for PDF!")
             self._pdf = create_normalized_pdf_from_cdf(self._cdf, self.cleanData.min(), self.cleanData.max(),
-                num_points = self.pdfMethod if isinstance(self.pdfMethod, int) else int(1+3.3*np.log10(self._N)) if self.pdfMethod.lower()=="log" else np.max([1,int(np.sqrt(self._N))]),
-                kind = "linear" if self.pdfMethod.lower()=="log" or isinstance(self.pdfMethod, int) else self.pdfMethod.lower()
+                num_points = self.pdfPoints,
+                kind = self.pdfMethod.lower()
             )
         pass
     
@@ -115,7 +95,7 @@ def sortDataWeights(data, weights):
 def create_weighted_cdf_interp1d(data, weights, kind="linear"):
     sorted_data, sorted_weights = sortDataWeights(data, weights)
     
-    cum_weights = np.cumsum(sorted_weights)-sorted_weights[0]
+    cum_weights = np.cumsum(sorted_weights)
     total_weight = cum_weights[-1]
     weighted_cdf_values = cum_weights / total_weight
 
@@ -129,7 +109,7 @@ def create_weighted_cdf_interp1d(data, weights, kind="linear"):
 def create_weighted_ppf_interp1d(data, weights, kind="linear"):
     sorted_data, sorted_weights = sortDataWeights(data, weights)
 
-    cum_weights = np.cumsum(sorted_weights)-sorted_weights[0]
+    cum_weights = np.cumsum(sorted_weights)
     total_weight = cum_weights[-1]
     weighted_cdf_values = cum_weights / total_weight
 
@@ -144,7 +124,7 @@ def create_weighted_ppf_interp1d(data, weights, kind="linear"):
 def create_weighted_cdf_PCHIP(data, weights):
     sorted_data, sorted_weights = sortDataWeights(data, weights)
 
-    cum_weights = np.cumsum(sorted_weights)-sorted_weights[0]
+    cum_weights = np.cumsum(sorted_weights)
     total_weight = cum_weights[-1]
     weighted_cdf_values = cum_weights / total_weight
     
@@ -154,7 +134,7 @@ def create_weighted_cdf_PCHIP(data, weights):
 def create_weighted_ppf_PCHIP(data, weights):
     sorted_data, sorted_weights = sortDataWeights(data, weights)
 
-    cum_weights = np.cumsum(sorted_weights)-sorted_weights[0]
+    cum_weights = np.cumsum(sorted_weights)
     total_weight = cum_weights[-1]
     weighted_cdf_values = cum_weights / total_weight
     
