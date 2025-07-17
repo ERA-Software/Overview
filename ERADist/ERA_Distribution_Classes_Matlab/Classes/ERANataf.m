@@ -280,8 +280,8 @@ References:
             % dimensions).
             % The output Jac is only given if the input opt is given as 
             % character array 'Jac'. If that is the case, the output Jac
-            % corresponds to the Jacobian of the transformation of the
-            % first sample.
+            % corresponds to the Jacobian of the transformation of all
+            % samples with shape [n,d,d]
             %
             
             n_dim = length(Obj.Marginals); % number of dimensions of the joint distribution
@@ -312,12 +312,17 @@ References:
             % Jacobian of X to U for the first sample
             if nargin == 2
                 Jac = [];
-            elseif strcmp('Jac',opt) == 1
+            elseif strcmp('Jac',opt) == 1               
+                n_samples = size(X,1);
+                Jac = zeros(n_samples, n_dim, n_dim);
                 diag = zeros(n_dim);
-                for i = 1:n_dim
-                    diag(i,i) = Obj.Marginals(i).pdf(X(1,i))/normpdf(Z(i,1));
+                for n = 1:n_samples
+                    for i = 1:n_dim
+                        diag(i,i) = Obj.Marginals(i).pdf(X(n,i))/normpdf(Z(i,n));
+                    end
+                    Jac(n,:,:) = Obj.A\diag;
                 end
-                Jac = Obj.A\diag;
+                
             else
                 error('Wrong Input');
             end
@@ -336,8 +341,8 @@ References:
             % dimensions).
             % The output Jac is only given if the input opt is given as 
             % character array 'Jac'. If that is the case, the output Jac
-            % corresponds to the Jacobian of the transformation of the
-            % first sample.
+            % corresponds to the Jacobian of the transformation of all
+            % samples with shape [n,d,d].
             %
             
             n_dim = length(Obj.Marginals); % number of dimensions of the joint distribution
@@ -363,11 +368,15 @@ References:
             if nargin == 2
                 Jac = [];
             elseif strcmp('Jac',opt) == 1
+                n_samples = size(X,1);
+                Jac = zeros(n_samples, n_dim, n_dim);
                 diag = zeros(n_dim);
-                for i = 1:n_dim
-                    diag(i,i) = normpdf(Z(i,1))/Obj.Marginals(i).pdf(X(1,i));
-                end
-                Jac = diag*Obj.A;   
+                for n = 1:n_samples
+                    for i = 1:n_dim
+                        diag(i,i) = normpdf(Z(i,n))/Obj.Marginals(i).pdf(X(n,i));
+                    end
+                    Jac(n,:,:) = diag*Obj.A;
+                end   
             else
                 error('Wrong Input');
             end
