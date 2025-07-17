@@ -4,6 +4,8 @@ import scipy as sp
 from scipy import optimize, stats, special
 import warnings
 
+from EmpiricalDist import DistME
+
 """
 ---------------------------------------------------------------------------
 Generation of distribution objects
@@ -135,6 +137,7 @@ class ERADist(object):
       Truncated normal:           Obj = ERADist('truncatednormal','DATA',[[X],[a,b]])
       Uniform:                    Obj = ERADist('uniform','DATA',[X])
       Weibull:                    Obj = ERADist('weibull','DATA',[X])
+      Empirical:                  Obj = ERADist('empirical', 'DATA', [X, [weights, cdfMethod, pdfMethod, kdeKwargsDict]])
           
     """
 #%%
@@ -856,7 +859,16 @@ class ERADist(object):
                 pars = stats.weibull_min.fit(val, floc=0)
                 self.Par = {'a_n':pars[2], 'k':pars[0]}
                 self.Dist = stats.weibull_min(c=self.Par['k'], scale=self.Par['a_n'])
-
+                
+            elif name.lower() == "empirical":
+                X = val[0]
+                self.Par = {
+                    'weights': val[1],
+                    'cdfMethod': val[2],
+                    'pdfMethod': val[3],
+                }
+                self.Par.update(val[4])
+                self.Dist = DistME(data=X, **self.Par) # implemented by Michael Engel
             
             else:
                 raise RuntimeError("Distribution type '" + name + "' not available.")
