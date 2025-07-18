@@ -29,7 +29,6 @@ Peter Kaplan
 Engineering Risk Analysis Group
 Technische Universitat Munchen
 www.bgu.tum.de/era
-Contact: Antonios Kamariotis (antonis.kamariotis@tum.de)
 ---------------------------------------------------------------------------
 Version 2021-03
 ---------------------------------------------------------------------------
@@ -39,7 +38,6 @@ References:
 '''
 
 np.random.seed(2021) #initializing random number generator
-n = 5; #number of data points
 
 ''' Definition of an ERADist object by the distribution parameters '''
 

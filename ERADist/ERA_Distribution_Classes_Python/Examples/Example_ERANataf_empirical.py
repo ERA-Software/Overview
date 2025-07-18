@@ -14,25 +14,12 @@ Example file: Definition and use of ERADist empirical
  use of its methods are shown. For more information on ERANataf please have
  a look at the provided documentation. 
 ---------------------------------------------------------------------------
-Additions regarding empirical distributions and Jacobians:
-Michael Engel
-
 Developed by:
-Sebastian Geyer
-Felipe Uribe
-Iason Papaioannou
-Daniel Straub
-
-Assistant Developers:
-Luca Sardi
-Alexander von Ramm
-Matthias Willer
-Peter Kaplan
+Michael Engel
 
 Engineering Risk Analysis Group
 Technische Universitat Munchen
 www.bgu.tum.de/era
-Contact: Antonios Kamariotis (antonis.kamariotis@tum.de)
 ---------------------------------------------------------------------------
 Version 2025-07
 ---------------------------------------------------------------------------
