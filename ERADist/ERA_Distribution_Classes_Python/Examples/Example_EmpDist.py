@@ -1,9 +1,28 @@
-### Michael Engel ### 2025-07-16 ### Example_DistME.py ###
 import numpy as np
 import matplotlib.pyplot as plt
 
-from EmpiricalDist import DistME
-from scipy.stats import ecdf
+from EmpiricalDist import EmpDist
+
+'''
+---------------------------------------------------------------------------
+Example file: Creation and use of an EmpDist object
+---------------------------------------------------------------------------
+In this example a lognormal distribution is defined by its parameters,
+moments and data.Furthermore the different methods of ERADist are
+illustrated.
+For other distributions and more information on ERADist please have a look
+at the provided documentation.
+---------------------------------------------------------------------------
+Developed by: 
+Michael Engel
+
+Engineering Risk Analysis Group
+Technische Universitat Munchen
+www.bgu.tum.de/era
+---------------------------------------------------------------------------
+Initial Version 2025-07
+---------------------------------------------------------------------------
+'''
 
 def sample_bimodal_gaussian(n_samples=1000, mix_weights=(0.4, 0.6),
                             means=(-2, 3), stds=(0.7, 1.2)):
@@ -26,7 +45,7 @@ if __name__ == "__main__":
     weights = np.ones_like(data)  # uniform empirical weights
 
     # 2. Fit the empirical distribution
-    dist_emp = DistME(data, weights=weights, pdfMethod="kde", pdfPoints=None, bw_method=0.1)
+    dist_emp = EmpDist(data, weights=weights, pdfMethod="kde", pdfPoints=None, bw_method=0.1)
 
     # 3. Plot histogram + estimated PDF
     x_grid = np.linspace(data.min() - 1, data.max() + 1, 1000)
@@ -45,7 +64,7 @@ if __name__ == "__main__":
     # 4. Plot CDF and inverse CDF (PPF)
     cdf_vals = dist_emp.cdf(x_grid)
     y_grid = np.linspace(0, 1, 1000)
-    ppf_vals = dist_emp.ppf(y_grid)
+    icdf_vals = dist_emp.icdf(y_grid)
 
     fig, axes = plt.subplots(1, 2, figsize=(12, 4))
 
@@ -54,7 +73,7 @@ if __name__ == "__main__":
     axes[0].set_xlabel("x")
     axes[0].set_ylabel("F(x)")
 
-    axes[1].plot(y_grid, ppf_vals, 'g-')
+    axes[1].plot(y_grid, icdf_vals, 'g-')
     axes[1].set_title("Estimated Inverse CDF (PPF)")
     axes[1].set_xlabel("Quantile")
     axes[1].set_ylabel("x")
@@ -64,7 +83,7 @@ if __name__ == "__main__":
 
     # 5. Draw new samples from the empirical distribution
     M = 2000
-    sampled = dist_emp.rvs(size=M)
+    sampled = dist_emp.random(size=M)
 
     # 6. Compare histograms: original vs resampled
     plt.figure(figsize=(8, 4))

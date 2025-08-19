@@ -4,7 +4,7 @@ import scipy as sp
 from scipy import optimize, stats, special
 import warnings
 
-from EmpiricalDist import DistME
+from EmpiricalDist import EmpDist
 
 """
 ---------------------------------------------------------------------------
@@ -26,8 +26,9 @@ Peter Kaplan
 Engineering Risk Analysis Group
 Technische Universitat Munchen
 www.bgu.tum.de/era
-Contact: Antonios Kamariotis (antonis.kamariotis@tum.de)
 ---------------------------------------------------------------------------
+Version 2025-07:
+* Integration of empirical distribution data fit
 Version 2021-03:
 * General update to match the current MATLAB version
 * Implementation of all the missing distribution types for the option
@@ -137,8 +138,7 @@ class ERADist(object):
       Truncated normal:           Obj = ERADist('truncatednormal','DATA',[[X],[a,b]])
       Uniform:                    Obj = ERADist('uniform','DATA',[X])
       Weibull:                    Obj = ERADist('weibull','DATA',[X])
-      Empirical:                  Obj = ERADist('empirical', 'DATA', [X, [weights, pdfMethod, pdfPoints, kdeKwargsDict]])
-          
+      Empirical:                  Obj = ERADist('empirical', 'DATA', [X, [weights, pdfMethod, pdfPoints, kdeKwargsDict]])     
     """
 #%%
     def __init__(self, name, opt, val=[0, 1], ID=False):
@@ -868,7 +868,7 @@ class ERADist(object):
                     'pdfPoints': val[3]
                 }
                 self.Par.update(val[4])
-                self.Dist = DistME(data=X, **self.Par) # implemented by Michael Engel
+                self.Dist = EmpDist(data=X, **self.Par) # implemented by Michael Engel
             
             else:
                 raise RuntimeError("Distribution type '" + name + "' not available.")

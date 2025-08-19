@@ -6,33 +6,19 @@ import matplotlib.pylab as plt
 ---------------------------------------------------------------------------
 Example file: Definition and use of ERADist empirical distribution object
 ---------------------------------------------------------------------------
- 
- In this example an empirical distribution is defined by a set of datapoints.
- Furthermore the different methods of ERADist are illustrated. For other
- distributions and more information on ERADist please have a look at the
- provided documentation or execute the command 'help(ERADist)'.
- 
+In this example an empirical distribution is defined by a set of datapoints.
+Furthermore the different methods of ERADist are illustrated. 
+For other distributions and more information on ERADist please have a look
+at the provided documentation.
 ---------------------------------------------------------------------------
-Additions regarding empirical distributions:
+Developed by: 
 Michael Engel
-
-Developed by:
-Sebastian Geyer
-Felipe Uribe
-Iason Papaioannou
-Daniel Straub
-
-Assistant Developers:
-Luca Sardi
-Alexander von Ramm
-Matthias Willer
-Peter Kaplan
 
 Engineering Risk Analysis Group
 Technische Universitat Munchen
 www.bgu.tum.de/era
 ---------------------------------------------------------------------------
-Version 2025-07
+Initial Version 2025-07
 ---------------------------------------------------------------------------
 References:
 1. Documentation of the ERA Distribution Classes

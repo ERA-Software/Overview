@@ -1,14 +1,18 @@
-#### Michael Engel ### 2025-07-16 ### EmpiricalDist.py ###
 import numpy as np
 import scipy.stats as sps
 from scipy.interpolate import interp1d, PchipInterpolator
 
-class DistME():
+class EmpDist():
     """
     Returns a distribution object similar to scipy.stats based on a dataset
     given by the user.
+    ---------------------------------------------------------------------------
+    Developed by: Michael Engel
+    ---------------------------------------------------------------------------
+    Initial Version: 2025-07
+    ---------------------------------------------------------------------------
     """
-    #%% initialization
+    ## initialization
     def __init__(
         self,
         data,
@@ -44,11 +48,11 @@ class DistME():
             
         # pdf
         if self.pdfMethod.lower()=="kde":
-            print("DistME: Using Gaussian KDE for PDF!")
+            print("EmpDist: Using Gaussian KDE for PDF!")
             dataSorted, weightsSorted = sortDataWeights(self.cleanData, self.normalizedWeights)
             self._pdf = sps.gaussian_kde(dataset=dataSorted, weights=weightsSorted, **pdfMethodParams)
         else:
-            print("DistME: Using numerical derivative for PDF!")
+            print("EmpDist: Using numerical derivative for PDF!")
             self._pdf = create_normalized_pdf_from_cdf(self._cdf, self.cleanData.min(), self.cleanData.max(),
                 num_points = self.pdfPoints,
                 kind = self.pdfMethod.lower()
@@ -73,12 +77,19 @@ class DistME():
     def cdf(self, x):
         return self._cdf(x)
     
-    def ppf(self, y): # inverse cdf
+    def icdf(self, y):
+        return self._ppf(y)
+    
+    def ppf(self, y):
         return self._ppf(y)
        
-    def rvs(self, size=None): # random samples
+    def random(self, size=None): # random samples
         rands = np.random.rand(size)
-        return self.ppf(rands)
+        return self.icdf(rands)
+    
+    def rvs(self, size=None):
+        rands = np.random.rand(size)
+        return self.icdf(rands)
     
 def sortDataWeights(data, weights):
     data = np.asarray(data)

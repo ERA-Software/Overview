@@ -2,17 +2,16 @@ from ERADist import ERADist
 from ERANataf import ERANataf
 import numpy as np
 import matplotlib.pylab as plt
-from mpl_toolkits.mplot3d import Axes3D
 
 '''
 ---------------------------------------------------------------------------
 Example file: Definition and use of ERADist empirical 
 ---------------------------------------------------------------------------
-
- In this script the definition of a joint distribution object including an
- empirical distribution based on a dataset with the ERANataf class and the
- use of its methods are shown. For more information on ERANataf please have
- a look at the provided documentation. 
+In this script the definition of a joint distribution object including an
+empirical distribution based on a dataset with the ERANataf class and the
+use of its methods are shown. 
+For more information on ERANataf please have a look at the provided
+documentation. 
 ---------------------------------------------------------------------------
 Developed by:
 Michael Engel
