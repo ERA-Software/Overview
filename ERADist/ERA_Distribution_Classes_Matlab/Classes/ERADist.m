@@ -89,7 +89,7 @@ classdef ERADist
 %{
 ---------------------------------------------------------------------------
 Developed by:
-Antonios Kamariotis (antonis.kamariotis@tum.de)
+Antonios Kamariotis
 Sebastian Geyer
 Felipe Uribe
 Iason Papaioannou
@@ -142,6 +142,7 @@ References:
         Name % type of distribution
         Par  % parameters of the distribution
         ID   % name by which the distribution can be identified
+        Dist % distribution object for EmpDist
     end
         
     
@@ -779,6 +780,28 @@ References:
                                 error('val must be non-negative');
                             end
                             
+                        case 'empirical'
+                            X = val{1};
+                            Obj.Par = struct( ...
+                                'weights',   val{2}, ...
+                                'pdfMethod', val{3}, ...
+                                'pdfPoints', val{4});
+
+                            % Merge with additional options in val{5}
+                            if numel(val) >= 5 && isstruct(val{5})
+                                extraFields = fieldnames(val{5});
+                                for k = 1:numel(extraFields)
+                                    Obj.Par.(extraFields{k}) = val{5}.(extraFields{k});
+                                end
+                            end
+
+                            % Create DistME object
+                            Obj.Dist = EmpDist(X, ...
+                                'weights',   Obj.Par.weights, ...
+                                'pdfMethod', Obj.Par.pdfMethod, ...
+                                'pdfPoints', Obj.Par.pdfPoints, ...
+                                'pdfMethodParams', Obj.Par);
+
                         otherwise
                             disp('Distribution type not available');
                     end
@@ -849,6 +872,8 @@ References:
                     MEAN = (Obj.Par(2)+Obj.Par(1))/2;
                 case 'weibull'
                     MEAN = Obj.Par(1)*(gamma(1+1/Obj.Par(2)));
+                case 'empirical'
+                    MEAN = Obj.Dist.mean();
                 otherwise
                     disp('Error - distribution not available');
             end
@@ -915,6 +940,8 @@ References:
                     Standarddeviation = sqrt(((Obj.Par(2)-Obj.Par(1))^2)/12);
                 case 'weibull'
                     Standarddeviation = Obj.Par(1)*(gamma(1+2/Obj.Par(2))-gamma(1+1/Obj.Par(2))^2)^0.5;
+                case 'empirical'
+                    Standarddeviation = Obj.Dist.std();
                 otherwise
                     disp('Error - distribution not available');
             end
@@ -968,6 +995,8 @@ References:
                     CDF = unifcdf(x,Obj.Par(1),Obj.Par(2));
                 case 'weibull'
                     CDF = wblcdf(x,Obj.Par(1),Obj.Par(2));
+                case 'empirical'
+                    CDF = Obj.Dist.cdf(x);
                 otherwise
                     disp('Distribution type not available');
             end
@@ -1022,6 +1051,8 @@ References:
                     InverseCDF = unifinv(y,Obj.Par(1),Obj.Par(2));
                 case 'weibull'
                     InverseCDF = wblinv(y,Obj.Par(1),Obj.Par(2));
+                case 'empirical'
+                    InverseCDF = Obj.Dist.icdf(y);
                 otherwise
                     disp('Distribution type not available');
             end
@@ -1075,6 +1106,8 @@ References:
                     PDF = unifpdf(x,Obj.Par(1),Obj.Par(2));
                 case 'weibull'
                     PDF = wblpdf(x,Obj.Par(1),Obj.Par(2));
+                case 'empirical'
+                    PDF = Obj.Dist.pdf(x);
                 otherwise
                     disp('Distribution type not available');
             end
@@ -1132,6 +1165,8 @@ References:
                         Random = random('uniform',Obj.Par(1),Obj.Par(2),m);
                     case 'weibull'
                         Random = wblrnd(Obj.Par(1),Obj.Par(2),m);
+                    case 'empirical'
+                        Random = Obj.Dist.random(m);
                     otherwise
                         disp('Error - distribution not available');
                 end

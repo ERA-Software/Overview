@@ -1,10 +1,10 @@
 %% Example file: Definition and use of ERADist objects
 %{
- In this example a lognormal distribution is defined by its parameters,
- moments and data.Furthermore the different methods of ERADist are
- illustrated.
- For other distributions and more information on ERADist please have a look
- at the provided documentation or execute the command "help ERADist".
+In this example a lognormal distribution is defined by its parameters,
+moments and data.Furthermore the different methods of ERADist are
+illustrated.
+For other distributions and more information on ERADist please have a look
+at the provided documentation or execute the command "help ERADist".
 ---------------------------------------------------------------------------
 Developed by:
 Antonios Kamariotis (antonis.kamariotis@tum.de)
